@@ -3,6 +3,7 @@
 
   const Q = window.QUESTIONS;
   const TOPICS = window.TOPICS;
+  const LEVELS = window.LEVELS;
   const byId = Object.fromEntries(Q.map(q => [q.id, q]));
   const LETTERS = ['A', 'B', 'C', 'D'];
   const KEY = 'dsephys.v1';
@@ -63,6 +64,19 @@
   // Topic name in the current language, plus the other language as a muted label.
   const tname = t => lang === 'zh' ? t.zh : t.name;
   const tother = t => lang === 'zh' ? t.name : t.zh;
+  // HKDSE grade band of a question, e.g. "Lv 4" / "第 4 級".
+  const level = id => LEVELS.find(l => l.id === id);
+  const lname = l => lang === 'zh' ? l.zh : l.name;
+  const lbadge = l => `<span class="lv lv${l.id}">${esc(lname(l))}</span>`;
+  // Questions tried, total and accuracy for a group of questions.
+  function groupStats(qs) {
+    let a = 0, c = 0, seen = 0;
+    qs.forEach(q => { const p = S.progress[q.id]; if (p) { seen++; a += p.a; c += p.c; } });
+    return { a, c, seen, n: qs.length };
+  }
+  const statRow = (label, sub, st) => `<div class="topicrow"><div>${label}<div class="muted" style="font-size:.85rem">${sub ? sub + ' · ' : ''}${T('{seen}/{n} questions tried', st)}</div></div>
+        <div style="text-align:right"><b>${st.a ? pct(st.c, st.a) + '%' : '—'}</b><div class="muted" style="font-size:.8rem">${T('accuracy')}</div></div>
+        <div class="bar"><i style="width:${st.a ? pct(st.c, st.a) : 0}%"></i></div></div>`;
   // A question with its text swapped for the Chinese version when one exists.
   function loc(q) {
     if (lang !== 'zh') return q;
@@ -122,7 +136,7 @@
     const t = topic(q.topic);
     const num = o.num != null ? `<span class="qnum">${o.num}.</span>` : '';
     const of = o.total ? `<span>${T('of {n}', { n: o.total })}</span>` : '';
-    return `<div class="qhead">${num}${of}<span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span></div>
+    return `<div class="qhead">${num}${of}<span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span>${lbadge(level(q.level))}</div>
       <div class="stem">${q.stem}</div>${stmts}${fig}<div class="opts">${opts}</div>${exp}`;
   }
 
@@ -149,15 +163,10 @@
     const resume = session && !session.done
       ? `<div class="card row"><div><b>${T(session.mode === 'mock' ? 'Unfinished mock paper' : 'Unfinished practice')}</b><div class="muted">${T('Question {i} of {n}', { i: session.idx + 1, n: session.qs.length })}</div></div><span class="spacer"></span><button class="btn primary" data-go="quiz">${T('Resume')}</button></div>` : '';
 
-    const topicRows = TOPICS.map(t => {
-      const qs = Q.filter(q => q.topic === t.id);
-      let ta = 0, tc = 0, seen = 0;
-      qs.forEach(q => { const p = S.progress[q.id]; if (p) { seen++; ta += p.a; tc += p.c; } });
-      const acc = ta ? pct(tc, ta) + '%' : '—';
-      return `<div class="topicrow"><div>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span><div class="muted" style="font-size:.85rem">${T('{seen}/{n} questions tried', { seen, n: qs.length })}</div></div>
-        <div style="text-align:right"><b>${acc}</b><div class="muted" style="font-size:.8rem">${T('accuracy')}</div></div>
-        <div class="bar"><i style="width:${ta ? pct(tc, ta) : 0}%"></i></div></div>`;
-    }).join('');
+    const topicRows = TOPICS.map(t =>
+      statRow(`${esc(tname(t))}<span class="zh">${esc(tother(t))}</span>`, '', groupStats(Q.filter(q => q.topic === t.id)))).join('');
+    const levelRows = LEVELS.map(l =>
+      statRow(lbadge(l), esc(T(l.about)), groupStats(Q.filter(q => q.level === l.id)))).join('');
 
     const hist = mocks.slice(-5).reverse().map(h =>
       `<tr><td>${fmtDate(h.date)}</td><td>${h.score} / ${h.total}</td><td>${pct(h.score, h.total)}%</td><td>${fmtTime(h.secs)}</td></tr>`).join('');
@@ -178,6 +187,7 @@
         <button class="btn" data-go="wrong">${T('Review wrong book')}</button>
       </div>
       <div class="card"><h2>${T('By topic')}</h2>${topicRows}</div>
+      <div class="card"><h2>${T('By level')}</h2>${levelRows}<p class="muted" style="font-size:.85rem;margin:12px 0 0">${T('Levels are the setter’s estimate of the HKDSE grade at which a student would usually answer the question correctly, not an official HKEAA classification.')}</p></div>
       ${hist ? `<div class="card"><h2>${T('Recent mock papers')}</h2><table><tr><th>${T('Date')}</th><th>${T('Score')}</th><th>%</th><th>${T('Time used')}</th></tr>${hist}</table></div>` : ''}
       <div class="card"><h2>${T('Your data')}</h2>
         <p class="muted">${T('Progress is stored in this browser. Export it to move to another device.')}</p>
@@ -209,11 +219,15 @@
   function renderPractice() {
     const chips = TOPICS.map(t =>
       `<label class="chip on"><input type="checkbox" value="${t.id}" checked>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span></label>`).join('');
+    const lchips = LEVELS.map(l =>
+      `<label class="chip on" title="${esc(T(l.about))}"><input type="checkbox" value="${l.id}" checked>${esc(lname(l))}</label>`).join('');
     app.innerHTML = `
       <h1>${T('Topic practice')}</h1>
       <p class="muted">${T('Answer one question at a time and see the worked solution immediately. Wrong answers go into your wrong book automatically.')}</p>
       <div class="card">
         <h2>${T('Topics')}</h2><div class="chips" id="chips">${chips}</div>
+        <h2 style="margin-top:18px">${T('Levels')}</h2><div class="chips" id="lchips">${lchips}</div>
+        <ul class="muted lvlist">${LEVELS.map(l => `<li><b>${esc(lname(l))}</b> ${esc(T(l.about))}</li>`).join('')}</ul>
         <div class="row" style="margin-top:18px">
           <label>${T('Number of questions')}
             <select id="n"><option>5</option><option selected>10</option><option>20</option><option value="999">${T('All')}</option></select></label>
@@ -221,12 +235,22 @@
         </div>
         <div class="row" style="margin-top:18px"><button class="btn primary" id="start">${T('Start')}</button><span id="msg" class="muted"></span></div>
       </div>`;
-    const chipsEl = document.getElementById('chips');
-    chipsEl.addEventListener('change', e => e.target.closest('.chip').classList.toggle('on', e.target.checked));
+    const chipsEl = document.getElementById('chips'), lchipsEl = document.getElementById('lchips'), msg = document.getElementById('msg');
+    const picked = el => [...el.querySelectorAll('input:checked')].map(i => i.value);
+    const matching = () => {
+      const tsel = picked(chipsEl), lsel = picked(lchipsEl).map(Number);
+      return Q.filter(q => tsel.includes(q.topic) && lsel.includes(q.level));
+    };
+    const showCount = () => { msg.textContent = T('{n} questions match', { n: matching().length }); };
+    [chipsEl, lchipsEl].forEach(el => el.addEventListener('change', e => {
+      e.target.closest('.chip').classList.toggle('on', e.target.checked);
+      showCount();
+    }));
+    showCount();
     document.getElementById('start').onclick = () => {
-      const sel = [...chipsEl.querySelectorAll('input:checked')].map(i => i.value);
-      if (!sel.length) { document.getElementById('msg').textContent = T('Pick at least one topic.'); return; }
-      let pool = shuffle(Q.filter(q => sel.includes(q.topic)).map(q => q.id));
+      if (!picked(chipsEl).length) { msg.textContent = T('Pick at least one topic.'); return; }
+      if (!picked(lchipsEl).length) { msg.textContent = T('Pick at least one level.'); return; }
+      let pool = shuffle(matching().map(q => q.id));
       if (document.getElementById('unseen').checked) {
         pool.sort((a, b) => (S.progress[a] ? 1 : 0) - (S.progress[b] ? 1 : 0));
       }
@@ -357,12 +381,13 @@
   /* ---------- result ---------- */
   function renderResult() {
     const s = session;
-    const rows = TOPICS.map(t => {
-      const ids = s.qs.filter(id => byId[id].topic === t.id);
+    const row = (label, ids) => {
       if (!ids.length) return '';
       const c = ids.filter(id => s.answers[id] === byId[id].answer).length;
-      return `<tr><td>${esc(tname(t))}</td><td>${c} / ${ids.length}</td><td style="width:40%"><div class="bar"><i style="width:${pct(c, ids.length)}%"></i></div></td></tr>`;
-    }).join('');
+      return `<tr><td>${label}</td><td>${c} / ${ids.length}</td><td style="width:40%"><div class="bar"><i style="width:${pct(c, ids.length)}%"></i></div></td></tr>`;
+    };
+    const rows = TOPICS.map(t => row(esc(tname(t)), s.qs.filter(id => byId[id].topic === t.id))).join('');
+    const lrows = LEVELS.map(l => row(lbadge(l), s.qs.filter(id => byId[id].level === l.id))).join('');
     const wrongN = s.qs.length - s.score;
     app.innerHTML = `
       <h1>${T(s.mode === 'mock' ? 'Mock paper result' : 'Session summary')}</h1>
@@ -374,7 +399,8 @@
           <button class="btn primary" data-go="${s.mode === 'mock' ? 'mock' : s.mode === 'redo' ? 'wrong' : 'practice'}">${T(s.mode === 'mock' ? 'New mock paper' : 'Practise again')}</button>
         </div>
       </div>
-      ${s.qs.length ? `<div class="card"><h2>${T('By topic')}</h2><table>${rows}</table></div>` : ''}
+      ${s.qs.length ? `<div class="grid two"><div class="card"><h2>${T('By topic')}</h2><table>${rows}</table></div>
+        <div class="card"><h2>${T('By level')}</h2><table>${lrows}</table></div></div>` : ''}
       <div class="row" style="margin:8px 0 12px"><h2 style="margin:0">${T('Review')}</h2><span class="spacer"></span>
         <label class="row" style="gap:6px"><input type="checkbox" id="onlyWrong" ${wrongN ? 'checked' : ''}> ${T('Show wrong answers only')}</label></div>
       <div id="review"></div>`;
@@ -392,16 +418,19 @@
   }
 
   /* ---------- wrong book ---------- */
-  let wrongTab = 'active', wrongTopic = 'all';
+  let wrongTab = 'active', wrongTopic = 'all', wrongLevel = 'all';
   function renderWrong() {
     const all = Object.keys(S.wrong).filter(id => byId[id]);
     const list = all
       .filter(id => (wrongTab === 'active') === !S.wrong[id].mastered)
       .filter(id => wrongTopic === 'all' || byId[id].topic === wrongTopic)
+      .filter(id => wrongLevel === 'all' || byId[id].level === +wrongLevel)
       .sort((a, b) => S.wrong[b].count - S.wrong[a].count || (S.wrong[b].last || 0) - (S.wrong[a].last || 0));
     const nActive = all.filter(id => !S.wrong[id].mastered).length;
     const topicOpts = [`<option value="all">${T('All topics')}</option>`].concat(TOPICS.map(t =>
       `<option value="${t.id}" ${wrongTopic === t.id ? 'selected' : ''}>${esc(tname(t))}</option>`)).join('');
+    const levelOpts = [`<option value="all">${T('All levels')}</option>`].concat(LEVELS.map(l =>
+      `<option value="${l.id}" ${String(wrongLevel) === String(l.id) ? 'selected' : ''}>${esc(lname(l))}</option>`)).join('');
 
     const cards = list.map(id => {
       const q = byId[id], w = S.wrong[id];
@@ -409,7 +438,7 @@
       const plain = loc(q).stem.replace(/<[^>]+>/g, ' ');
       return `<div class="card wcard" data-id="${id}">
         <details><summary>
-          <div class="row"><span class="tag">${esc(tname(topic(q.topic)))}</span><span class="muted" style="font-size:.85rem">${esc(loc(q).sub)}</span></div>
+          <div class="row"><span class="tag">${esc(tname(topic(q.topic)))}</span><span class="muted" style="font-size:.85rem">${esc(loc(q).sub)}</span>${lbadge(level(q.level))}</div>
           <div class="preview" style="margin-top:6px">${esc(plain)}</div>
           <div class="wmeta"><span class="badge bad">${T('Wrong {n}×', { n: w.count })}</span><span class="badge warn">${T('Last: {x}', { x: chose })}</span>
             ${w.mastered ? `<span class="badge ok">${T('Mastered')}</span>` : `<span class="badge ok">${T('Streak {s}/{m}', { s: w.streak || 0, m: MASTER_STREAK })}</span>`}
@@ -433,12 +462,13 @@
       <p class="muted">${T('Every question you get wrong is collected here. Get it right {m} times in a row and it moves to Mastered.', { m: MASTER_STREAK })}</p>
       <div class="tabs"><button data-tab="active" class="${wrongTab === 'active' ? 'on' : ''}">${T('Active ({n})', { n: nActive })}</button>
         <button data-tab="mastered" class="${wrongTab === 'mastered' ? 'on' : ''}">${T('Mastered ({n})', { n: all.length - nActive })}</button></div>
-      <div class="row" style="margin-bottom:16px"><select id="wt">${topicOpts}</select><span class="spacer"></span>
+      <div class="row" style="margin-bottom:16px"><select id="wt">${topicOpts}</select><select id="wl">${levelOpts}</select><span class="spacer"></span>
         ${wrongTab === 'active' ? `<button class="btn primary" id="redoAll" ${list.length ? '' : 'disabled'}>${list.length ? T('Redo these {n} questions', { n: list.length }) : T('Redo questions')}</button>` : ''}</div>
       ${cards || `<div class="card empty">${T(wrongTab === 'active' ? 'No wrong questions here. Keep practising!' : 'Nothing mastered yet.')}</div>`}`;
 
     app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { wrongTab = b.dataset.tab; renderWrong(); });
     document.getElementById('wt').onchange = e => { wrongTopic = e.target.value; renderWrong(); };
+    document.getElementById('wl').onchange = e => { wrongLevel = e.target.value; renderWrong(); };
     const ra = document.getElementById('redoAll');
     if (ra) ra.onclick = () => startSession('redo', shuffle(list));
     app.querySelectorAll('.wcard').forEach(card => {

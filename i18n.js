@@ -63,6 +63,19 @@ window.I18N = {
     'Start': '開始',
     'Pick at least one topic.': '請最少選擇一個課題。',
 
+    /* HKDSE levels */
+    'Levels': '程度',
+    'By level': '按程度',
+    'All levels': '所有程度',
+    'Pick at least one level.': '請最少選擇一個程度。',
+    '{n} questions match': '符合條件：{n} 題',
+    'Recall and one-step questions': '記憶及一步計算題',
+    'Standard two-step problems': '標準兩步題',
+    'Multi-step problems and common traps': '多步題及常見陷阱',
+    'Unfamiliar contexts combining several ideas': '陌生情境，綜合多個概念',
+    'Levels are the setter’s estimate of the HKDSE grade at which a student would usually answer the question correctly, not an official HKEAA classification.':
+      '程度是出題者估計學生一般在 HKDSE 哪一級別能答對該題，並非考評局的官方分類。',
+
     /* mock setup */
     'Mock paper — Paper 1 Section A': '模擬試卷 — 卷一甲部',
     '{n} multiple-choice questions drawn across the compulsory part, arranged in syllabus order like the real paper. Each question has one correct answer out of A–D; there is no penalty for wrong answers, so answer every question.':

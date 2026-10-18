@@ -68,6 +68,19 @@ main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 40px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
 .grid { display: grid; gap: 12px; }
 .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.grid.two { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.grid.two > .card { margin-bottom: 0; }
+
+/* HKDSE level badges: darker as the level rises */
+.lv {
+  display: inline-block; padding: 0 8px; border-radius: 99px; white-space: nowrap;
+  font-size: .75rem; font-weight: 600; line-height: 1.6;
+  color: var(--muted); border: 1px solid var(--line);
+}
+.lv4 { color: var(--accent); border-color: var(--accent); }
+.lv5 { color: #fff; background: var(--accent); border-color: var(--accent); }
+.lvlist { margin: 10px 0 0; padding-left: 18px; font-size: .85rem; }
+.lvlist b { color: var(--ink); margin-right: 4px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
 .stat b { display: block; font-size: 1.6rem; }
 .stat span { color: var(--muted); font-size: .85rem; }

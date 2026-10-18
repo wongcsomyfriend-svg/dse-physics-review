@@ -2,7 +2,8 @@
 
 A static revision site for HKDSE Physics students:
 
-- **Topic practice**: choose topics and answer Paper 1 Section A style MC questions, with a worked solution after each one.
+- **Topic practice**: choose topics and HKDSE levels, then answer Paper 1 Section A style MC questions, with a worked solution after each one.
+- **Levelled question bank**: every question is tagged with the HKDSE grade band at which students usually get it right: Lv 2, Lv 3, Lv 4 or Lv 5/5**. Each topic has at least 5 questions at every level. Home, the result page and the wrong book show accuracy and filters by level. Levels are the setter's estimate, not an official HKEAA classification.
 - **Mock paper**: 33 questions across the compulsory part in syllabus order, with a 60-minute timer and a bubble answer sheet. Solutions appear only after you hand in.
 - **Wrong question book (錯題簿)**: every wrong answer is collected automatically. Add notes, redo questions, and clear one by getting it right twice in a row.
 - **List of data**: physical constants and exam tips.
@@ -12,7 +13,7 @@ Progress is saved in the browser's `localStorage`. You can export or import it f
 
 ## Adding questions
 
-Edit `questions.js`. Each question is one object. The field list is at the top of that file. Keep four options (A–D) in the HKDSE style. For statement questions, use the `statements` array with the usual option sets such as `(1) only` and `(1) and (2) only`.
+Edit `questions.js`. Each question is one object. The field list is at the top of that file, together with what each `level` (2, 3, 4, 5) means. Keep four options (A–D) in the HKDSE style. For statement questions, use the `statements` array with the usual option sets such as `(1) only` and `(1) and (2) only`.
 
 Then add the Chinese version to `questions.zh.js` under the same id, with `sub`, `stem`, `explain`, and `statements` if the question has them. Add `options` only when the options contain words. Numerical options are reused as they are, and statement option sets are converted automatically (`(1) and (2) only` → `只有 (1) 及 (2)`). The answer, figure and option order always come from `questions.js`. A question with no Chinese entry falls back to English.
 
