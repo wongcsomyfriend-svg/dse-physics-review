@@ -8,6 +8,13 @@
   const KEY = 'dsephys.v1';
   const MOCK_MINUTES = 60;   // suggested time for Section A within the 2 h 30 min Paper 1
   const MASTER_STREAK = 2;   // correct in a row needed to clear a wrong-book item
+  const LANG_KEY = 'dsephys.lang';
+  const I18N = window.I18N;
+  const ZH = window.QUESTIONS_ZH || {};
+  let lang = (() => {
+    try { const v = localStorage.getItem(LANG_KEY); if (v === 'en' || v === 'zh') return v; } catch (e) { /* storage unavailable */ }
+    return /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  })();
 
   const app = document.getElementById('app');
   let S = load();
@@ -47,6 +54,30 @@
   /* ---------- helpers ---------- */
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const topic = id => TOPICS.find(t => t.id === id);
+
+  // Interface text in the current language; {name} placeholders are filled from v.
+  function T(en, v) {
+    const s = (lang === 'zh' && I18N.zh[en]) || en;
+    return v ? s.replace(/\{(\w+)\}/g, (_, k) => v[k]) : s;
+  }
+  // Topic name in the current language, plus the other language as a muted label.
+  const tname = t => lang === 'zh' ? t.zh : t.name;
+  const tother = t => lang === 'zh' ? t.name : t.zh;
+  // A question with its text swapped for the Chinese version when one exists.
+  function loc(q) {
+    if (lang !== 'zh') return q;
+    const z = ZH[q.id] || {};
+    let fig = q.figure;
+    if (fig) for (const [a, b] of Object.entries(I18N.figure.zh)) fig = fig.split(a).join(b);
+    return Object.assign({}, q, {
+      sub: z.sub || q.sub,
+      stem: z.stem || q.stem,
+      statements: z.statements || q.statements,
+      options: z.options || q.options.map(I18N.stmtOption.zh),
+      explain: z.explain || q.explain,
+      figure: fig
+    });
+  }
   const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
   function shuffle(a) {
     a = a.slice();
@@ -58,7 +89,7 @@
     sec = Math.max(0, Math.round(sec));
     return String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(sec % 60).padStart(2, '0');
   }
-  const fmtDate = t => new Date(t).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const fmtDate = t => new Date(t).toLocaleString(lang === 'zh' ? 'zh-HK' : undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   function updateBadge() {
     const n = activeWrong().length, b = document.getElementById('wrongCount');
@@ -68,6 +99,7 @@
   /* ---------- question rendering ---------- */
   function questionHTML(q, o) {
     // o: { chosen, reveal, clickable, num, total }
+    q = loc(q);
     const stmts = q.statements
       ? '<ol class="stmts">' + q.statements.map((s, i) => `<li><b>(${i + 1})</b><span>${s}</span></li>`).join('') + '</ol>' : '';
     const fig = q.figure ? `<div class="figure">${q.figure}</div>` : '';
@@ -82,14 +114,15 @@
     let exp = '';
     if (o.reveal) {
       const ok = o.chosen === q.answer;
-      const head = o.chosen == null ? `Not answered — the answer is ${LETTERS[q.answer]}`
-        : ok ? `Correct — ${LETTERS[q.answer]}` : `Incorrect — you chose ${LETTERS[o.chosen]}, the answer is ${LETTERS[q.answer]}`;
+      const a = LETTERS[q.answer];
+      const head = o.chosen == null ? T('Not answered — the answer is {a}', { a })
+        : ok ? T('Correct — {a}', { a }) : T('Incorrect — you chose {c}, the answer is {a}', { c: LETTERS[o.chosen], a });
       exp = `<div class="explain ${ok ? '' : 'bad'}"><h3>${head}</h3>${q.explain}</div>`;
     }
     const t = topic(q.topic);
     const num = o.num != null ? `<span class="qnum">${o.num}.</span>` : '';
-    const of = o.total ? `<span>of ${o.total}</span>` : '';
-    return `<div class="qhead">${num}${of}<span class="tag">${esc(t.name)}</span><span>${esc(q.sub)}</span></div>
+    const of = o.total ? `<span>${T('of {n}', { n: o.total })}</span>` : '';
+    return `<div class="qhead">${num}${of}<span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span></div>
       <div class="stem">${q.stem}</div>${stmts}${fig}<div class="opts">${opts}</div>${exp}`;
   }
 
@@ -114,15 +147,15 @@
     const mocks = S.history.filter(h => h.mode === 'mock');
     const best = mocks.length ? Math.max(...mocks.map(h => pct(h.score, h.total))) + '%' : '—';
     const resume = session && !session.done
-      ? `<div class="card row"><div><b>Unfinished ${session.mode === 'mock' ? 'mock paper' : 'practice'}</b><div class="muted">Question ${session.idx + 1} of ${session.qs.length}</div></div><span class="spacer"></span><button class="btn primary" data-go="quiz">Resume</button></div>` : '';
+      ? `<div class="card row"><div><b>${T(session.mode === 'mock' ? 'Unfinished mock paper' : 'Unfinished practice')}</b><div class="muted">${T('Question {i} of {n}', { i: session.idx + 1, n: session.qs.length })}</div></div><span class="spacer"></span><button class="btn primary" data-go="quiz">${T('Resume')}</button></div>` : '';
 
     const topicRows = TOPICS.map(t => {
       const qs = Q.filter(q => q.topic === t.id);
       let ta = 0, tc = 0, seen = 0;
       qs.forEach(q => { const p = S.progress[q.id]; if (p) { seen++; ta += p.a; tc += p.c; } });
       const acc = ta ? pct(tc, ta) + '%' : '—';
-      return `<div class="topicrow"><div>${esc(t.name)}<span class="zh">${t.zh}</span><div class="muted" style="font-size:.85rem">${seen}/${qs.length} questions tried</div></div>
-        <div style="text-align:right"><b>${acc}</b><div class="muted" style="font-size:.8rem">accuracy</div></div>
+      return `<div class="topicrow"><div>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span><div class="muted" style="font-size:.85rem">${T('{seen}/{n} questions tried', { seen, n: qs.length })}</div></div>
+        <div style="text-align:right"><b>${acc}</b><div class="muted" style="font-size:.8rem">${T('accuracy')}</div></div>
         <div class="bar"><i style="width:${ta ? pct(tc, ta) : 0}%"></i></div></div>`;
     }).join('');
 
@@ -130,27 +163,27 @@
       `<tr><td>${fmtDate(h.date)}</td><td>${h.score} / ${h.total}</td><td>${pct(h.score, h.total)}%</td><td>${fmtTime(h.secs)}</td></tr>`).join('');
 
     app.innerHTML = `
-      <h1>HKDSE Physics Revision</h1>
-      <p class="muted">Paper 1 Section A style multiple-choice practice for the compulsory part. ${Q.length} questions in the bank.</p>
+      <h1>${T('HKDSE Physics Revision')}</h1>
+      <p class="muted">${T('Paper 1 Section A style multiple-choice practice for the compulsory part. {n} questions in the bank.', { n: Q.length })}</p>
       ${resume}
       <div class="grid stats" style="margin-bottom:16px">
-        <div class="stat"><b>${ids.length}<small class="muted" style="font-size:.9rem">/${Q.length}</small></b><span>questions tried</span></div>
-        <div class="stat"><b>${a ? pct(c, a) + '%' : '—'}</b><span>overall accuracy</span></div>
-        <div class="stat"><b>${activeWrong().length}</b><span>in wrong book</span></div>
-        <div class="stat"><b>${best}</b><span>best mock score</span></div>
+        <div class="stat"><b>${ids.length}<small class="muted" style="font-size:.9rem">/${Q.length}</small></b><span>${T('questions tried')}</span></div>
+        <div class="stat"><b>${a ? pct(c, a) + '%' : '—'}</b><span>${T('overall accuracy')}</span></div>
+        <div class="stat"><b>${activeWrong().length}</b><span>${T('in wrong book')}</span></div>
+        <div class="stat"><b>${best}</b><span>${T('best mock score')}</span></div>
       </div>
       <div class="card row">
-        <button class="btn primary" data-go="practice">Start practice</button>
-        <button class="btn" data-go="mock">Take a mock paper</button>
-        <button class="btn" data-go="wrong">Review wrong book</button>
+        <button class="btn primary" data-go="practice">${T('Start practice')}</button>
+        <button class="btn" data-go="mock">${T('Take a mock paper')}</button>
+        <button class="btn" data-go="wrong">${T('Review wrong book')}</button>
       </div>
-      <div class="card"><h2>By topic</h2>${topicRows}</div>
-      ${hist ? `<div class="card"><h2>Recent mock papers</h2><table><tr><th>Date</th><th>Score</th><th>%</th><th>Time used</th></tr>${hist}</table></div>` : ''}
-      <div class="card"><h2>Your data</h2>
-        <p class="muted">Progress is stored in this browser. Export it to move to another device.</p>
-        <div class="row"><button class="btn" id="exp">Export progress</button>
-        <label class="btn">Import progress<input type="file" id="imp" accept="application/json" hidden></label>
-        <span class="spacer"></span><button class="btn danger" id="reset">Reset all progress</button></div>
+      <div class="card"><h2>${T('By topic')}</h2>${topicRows}</div>
+      ${hist ? `<div class="card"><h2>${T('Recent mock papers')}</h2><table><tr><th>${T('Date')}</th><th>${T('Score')}</th><th>%</th><th>${T('Time used')}</th></tr>${hist}</table></div>` : ''}
+      <div class="card"><h2>${T('Your data')}</h2>
+        <p class="muted">${T('Progress is stored in this browser. Export it to move to another device.')}</p>
+        <div class="row"><button class="btn" id="exp">${T('Export progress')}</button>
+        <label class="btn">${T('Import progress')}<input type="file" id="imp" accept="application/json" hidden></label>
+        <span class="spacer"></span><button class="btn danger" id="reset">${T('Reset all progress')}</button></div>
       </div>`;
 
     document.getElementById('exp').onclick = () => {
@@ -165,34 +198,34 @@
         const d = JSON.parse(t);
         if (!d || typeof d.progress !== 'object') throw new Error('bad file');
         S = Object.assign(blank(), d); save(); renderHome();
-      }).catch(() => alert('That file is not a valid progress export.'));
+      }).catch(() => alert(T('That file is not a valid progress export.')));
     };
     document.getElementById('reset').onclick = () => {
-      if (confirm('Delete all progress, mock history and the wrong book on this browser?')) { S = blank(); session = null; save(); renderHome(); }
+      if (confirm(T('Delete all progress, mock history and the wrong book on this browser?'))) { S = blank(); session = null; save(); renderHome(); }
     };
   }
 
   /* ---------- practice setup ---------- */
   function renderPractice() {
     const chips = TOPICS.map(t =>
-      `<label class="chip on"><input type="checkbox" value="${t.id}" checked>${esc(t.name)}<span class="zh">${t.zh}</span></label>`).join('');
+      `<label class="chip on"><input type="checkbox" value="${t.id}" checked>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span></label>`).join('');
     app.innerHTML = `
-      <h1>Topic practice</h1>
-      <p class="muted">Answer one question at a time and see the worked solution immediately. Wrong answers go into your wrong book automatically.</p>
+      <h1>${T('Topic practice')}</h1>
+      <p class="muted">${T('Answer one question at a time and see the worked solution immediately. Wrong answers go into your wrong book automatically.')}</p>
       <div class="card">
-        <h2>Topics</h2><div class="chips" id="chips">${chips}</div>
+        <h2>${T('Topics')}</h2><div class="chips" id="chips">${chips}</div>
         <div class="row" style="margin-top:18px">
-          <label>Number of questions
-            <select id="n"><option>5</option><option selected>10</option><option>20</option><option value="999">All</option></select></label>
-          <label class="row" style="gap:6px"><input type="checkbox" id="unseen" checked> Unseen questions first</label>
+          <label>${T('Number of questions')}
+            <select id="n"><option>5</option><option selected>10</option><option>20</option><option value="999">${T('All')}</option></select></label>
+          <label class="row" style="gap:6px"><input type="checkbox" id="unseen" checked> ${T('Unseen questions first')}</label>
         </div>
-        <div class="row" style="margin-top:18px"><button class="btn primary" id="start">Start</button><span id="msg" class="muted"></span></div>
+        <div class="row" style="margin-top:18px"><button class="btn primary" id="start">${T('Start')}</button><span id="msg" class="muted"></span></div>
       </div>`;
     const chipsEl = document.getElementById('chips');
     chipsEl.addEventListener('change', e => e.target.closest('.chip').classList.toggle('on', e.target.checked));
     document.getElementById('start').onclick = () => {
       const sel = [...chipsEl.querySelectorAll('input:checked')].map(i => i.value);
-      if (!sel.length) { document.getElementById('msg').textContent = 'Pick at least one topic.'; return; }
+      if (!sel.length) { document.getElementById('msg').textContent = T('Pick at least one topic.'); return; }
       let pool = shuffle(Q.filter(q => sel.includes(q.topic)).map(q => q.id));
       if (document.getElementById('unseen').checked) {
         pool.sort((a, b) => (S.progress[a] ? 1 : 0) - (S.progress[b] ? 1 : 0));
@@ -204,14 +237,14 @@
   /* ---------- mock setup ---------- */
   function renderMock() {
     const total = TOPICS.reduce((s, t) => s + t.mock, 0);
-    const rows = TOPICS.map(t => `<tr><td>${esc(t.name)}<span class="zh">${t.zh}</span></td><td>${t.mock}</td></tr>`).join('');
+    const rows = TOPICS.map(t => `<tr><td>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span></td><td>${t.mock}</td></tr>`).join('');
     app.innerHTML = `
-      <h1>Mock paper — Paper 1 Section A</h1>
+      <h1>${T('Mock paper — Paper 1 Section A')}</h1>
       <div class="card">
-        <p>${total} multiple-choice questions drawn across the compulsory part, arranged in syllabus order like the real paper. Each question has one correct answer out of A–D; there is no penalty for wrong answers, so answer every question.</p>
-        <p class="muted">Timer: ${MOCK_MINUTES} minutes (a typical share of the 2 h 30 min Paper 1 for Section A). Answers and solutions are shown only after you hand in.</p>
-        <table><tr><th>Topic</th><th>Questions</th></tr>${rows}</table>
-        <div class="row" style="margin-top:18px"><button class="btn primary" id="start">Start mock paper</button></div>
+        <p>${T('{n} multiple-choice questions drawn across the compulsory part, arranged in syllabus order like the real paper. Each question has one correct answer out of A–D; there is no penalty for wrong answers, so answer every question.', { n: total })}</p>
+        <p class="muted">${T('Timer: {m} minutes (a typical share of the 2 h 30 min Paper 1 for Section A). Answers and solutions are shown only after you hand in.', { m: MOCK_MINUTES })}</p>
+        <table><tr><th>${T('Topic')}</th><th>${T('Questions')}</th></tr>${rows}</table>
+        <div class="row" style="margin-top:18px"><button class="btn primary" id="start">${T('Start mock paper')}</button></div>
       </div>`;
     document.getElementById('start').onclick = () => {
       const ids = [];
@@ -231,7 +264,7 @@
   function tick() {
     const el = document.getElementById('timer');
     const left = (session.deadline - Date.now()) / 1000;
-    if (left <= 0) { stopTimer(); alert('Time is up. Your paper has been handed in.'); finish(); return; }
+    if (left <= 0) { stopTimer(); alert(T('Time is up. Your paper has been handed in.')); finish(); return; }
     if (el) { el.textContent = fmtTime(left); el.classList.toggle('low', left < 300); }
   }
 
@@ -244,7 +277,7 @@
     const answered = Object.keys(s.answers).length;
     const last = s.idx === s.qs.length - 1;
 
-    const title = mock ? 'Mock paper' : s.mode === 'redo' ? 'Wrong book redo' : 'Practice';
+    const title = T(mock ? 'Mock paper' : s.mode === 'redo' ? 'Wrong book redo' : 'Practice');
     const bubbles = s.qs.map((qid, i) => {
       let cls = '';
       if (mock) cls = s.answers[qid] != null ? 'ans' : '';
@@ -257,24 +290,24 @@
 
     app.innerHTML = `
       <div class="row" style="margin-bottom:12px"><h1 style="margin:0">${title}</h1><span class="spacer"></span>
-        <span class="muted">${answered} / ${s.qs.length} answered</span></div>
+        <span class="muted">${T('{a} / {n} answered', { a: answered, n: s.qs.length })}</span></div>
       <div class="qwrap">
         <div class="card">
           ${questionHTML(q, { chosen, reveal, clickable: mock || chosen == null, num: s.idx + 1, total: s.qs.length })}
           <div class="row qnav">
-            <button class="btn" id="prev" ${s.idx === 0 ? 'disabled' : ''}>← Previous</button>
-            ${mock ? `<button class="btn small" id="flag">${s.flags[id] ? 'Unflag' : 'Flag for review'}</button>` : ''}
+            <button class="btn" id="prev" ${s.idx === 0 ? 'disabled' : ''}>${T('← Previous')}</button>
+            ${mock ? `<button class="btn small" id="flag">${T(s.flags[id] ? 'Unflag' : 'Flag for review')}</button>` : ''}
             <span class="spacer"></span>
-            ${last ? (mock ? '' : `<button class="btn primary" id="end" ${chosen == null ? 'disabled' : ''}>See summary</button>`)
-                   : `<button class="btn ${mock || reveal ? 'primary' : ''}" id="next">Next →</button>`}
+            ${last ? (mock ? '' : `<button class="btn primary" id="end" ${chosen == null ? 'disabled' : ''}>${T('See summary')}</button>`)
+                   : `<button class="btn ${mock || reveal ? 'primary' : ''}" id="next">${T('Next →')}</button>`}
           </div>
         </div>
         <aside class="card sheet">
-          ${mock ? `<div class="muted" style="font-size:.85rem">Time left</div><div class="timer" id="timer">${fmtTime((s.deadline - Date.now()) / 1000)}</div>` : '<b>Questions</b>'}
+          ${mock ? `<div class="muted" style="font-size:.85rem">${T('Time left')}</div><div class="timer" id="timer">${fmtTime((s.deadline - Date.now()) / 1000)}</div>` : `<b>${T('Questions')}</b>`}
           <div class="bubbles">${bubbles}</div>
-          <div class="legend">${mock ? 'Blue = answered · orange line = flagged' : 'Green = correct · red = wrong'}<br>Keys: A–D to answer, ← → to move</div>
-          ${mock ? '<button class="btn primary" id="submit" style="width:100%;justify-content:center;margin-top:12px">Hand in paper</button>'
-                 : '<button class="btn small" id="quit" style="margin-top:12px">End session</button>'}
+          <div class="legend">${T(mock ? 'Blue = answered · orange line = flagged' : 'Green = correct · red = wrong')}<br>${T('Keys: A–D to answer, ← → to move')}</div>
+          ${mock ? `<button class="btn primary" id="submit" style="width:100%;justify-content:center;margin-top:12px">${T('Hand in paper')}</button>`
+                 : `<button class="btn small" id="quit" style="margin-top:12px">${T('End session')}</button>`}
         </aside>
       </div>`;
 
@@ -288,7 +321,7 @@
     on('flag', () => { s.flags[id] = !s.flags[id]; renderQuiz(); });
     on('submit', () => {
       const blank = s.qs.length - Object.keys(s.answers).length;
-      if (confirm(blank ? `You have ${blank} unanswered question(s). Hand in anyway?` : 'Hand in your paper?')) finish();
+      if (confirm(blank ? T('You have {n} unanswered question(s). Hand in anyway?', { n: blank }) : T('Hand in your paper?'))) finish();
     });
 
     if (mock && !timerId) { timerId = setInterval(tick, 1000); tick(); }
@@ -328,22 +361,22 @@
       const ids = s.qs.filter(id => byId[id].topic === t.id);
       if (!ids.length) return '';
       const c = ids.filter(id => s.answers[id] === byId[id].answer).length;
-      return `<tr><td>${esc(t.name)}</td><td>${c} / ${ids.length}</td><td style="width:40%"><div class="bar"><i style="width:${pct(c, ids.length)}%"></i></div></td></tr>`;
+      return `<tr><td>${esc(tname(t))}</td><td>${c} / ${ids.length}</td><td style="width:40%"><div class="bar"><i style="width:${pct(c, ids.length)}%"></i></div></td></tr>`;
     }).join('');
     const wrongN = s.qs.length - s.score;
     app.innerHTML = `
-      <h1>${s.mode === 'mock' ? 'Mock paper result' : 'Session summary'}</h1>
+      <h1>${T(s.mode === 'mock' ? 'Mock paper result' : 'Session summary')}</h1>
       <div class="card row">
-        <div><div class="score">${s.score} / ${s.qs.length}</div><div class="muted">${pct(s.score, s.qs.length)}% · time used ${fmtTime(s.secs)}</div></div>
+        <div><div class="score">${s.score} / ${s.qs.length}</div><div class="muted">${T('{p}% · time used {t}', { p: pct(s.score, s.qs.length), t: fmtTime(s.secs) })}</div></div>
         <span class="spacer"></span>
         <div class="row">
-          ${wrongN ? `<button class="btn" data-go="wrong">Open wrong book (${activeWrong().length})</button>` : ''}
-          <button class="btn primary" data-go="${s.mode === 'mock' ? 'mock' : s.mode === 'redo' ? 'wrong' : 'practice'}">${s.mode === 'mock' ? 'New mock paper' : 'Practise again'}</button>
+          ${wrongN ? `<button class="btn" data-go="wrong">${T('Open wrong book ({n})', { n: activeWrong().length })}</button>` : ''}
+          <button class="btn primary" data-go="${s.mode === 'mock' ? 'mock' : s.mode === 'redo' ? 'wrong' : 'practice'}">${T(s.mode === 'mock' ? 'New mock paper' : 'Practise again')}</button>
         </div>
       </div>
-      ${s.qs.length ? `<div class="card"><h2>By topic</h2><table>${rows}</table></div>` : ''}
-      <div class="row" style="margin:8px 0 12px"><h2 style="margin:0">Review</h2><span class="spacer"></span>
-        <label class="row" style="gap:6px"><input type="checkbox" id="onlyWrong" ${wrongN ? 'checked' : ''}> Show wrong answers only</label></div>
+      ${s.qs.length ? `<div class="card"><h2>${T('By topic')}</h2><table>${rows}</table></div>` : ''}
+      <div class="row" style="margin:8px 0 12px"><h2 style="margin:0">${T('Review')}</h2><span class="spacer"></span>
+        <label class="row" style="gap:6px"><input type="checkbox" id="onlyWrong" ${wrongN ? 'checked' : ''}> ${T('Show wrong answers only')}</label></div>
       <div id="review"></div>`;
     const draw = () => {
       const only = document.getElementById('onlyWrong').checked;
@@ -352,7 +385,7 @@
         if (only && ok) return '';
         return `<div class="card">${questionHTML(q, { chosen: s.answers[id] ?? null, reveal: true, clickable: false, num: i + 1 })}</div>`;
       }).join('');
-      document.getElementById('review').innerHTML = html || '<div class="card empty">All correct — nothing to review.</div>';
+      document.getElementById('review').innerHTML = html || `<div class="card empty">${T('All correct — nothing to review.')}</div>`;
     };
     document.getElementById('onlyWrong').onchange = draw;
     draw();
@@ -367,42 +400,42 @@
       .filter(id => wrongTopic === 'all' || byId[id].topic === wrongTopic)
       .sort((a, b) => S.wrong[b].count - S.wrong[a].count || (S.wrong[b].last || 0) - (S.wrong[a].last || 0));
     const nActive = all.filter(id => !S.wrong[id].mastered).length;
-    const topicOpts = ['<option value="all">All topics</option>'].concat(TOPICS.map(t =>
-      `<option value="${t.id}" ${wrongTopic === t.id ? 'selected' : ''}>${esc(t.name)}</option>`)).join('');
+    const topicOpts = [`<option value="all">${T('All topics')}</option>`].concat(TOPICS.map(t =>
+      `<option value="${t.id}" ${wrongTopic === t.id ? 'selected' : ''}>${esc(tname(t))}</option>`)).join('');
 
     const cards = list.map(id => {
       const q = byId[id], w = S.wrong[id];
-      const chose = w.chosen == null ? 'left blank' : `chose ${LETTERS[w.chosen]}`;
-      const plain = q.stem.replace(/<[^>]+>/g, ' ');
+      const chose = w.chosen == null ? T('left blank') : T('chose {c}', { c: LETTERS[w.chosen] });
+      const plain = loc(q).stem.replace(/<[^>]+>/g, ' ');
       return `<div class="card wcard" data-id="${id}">
         <details><summary>
-          <div class="row"><span class="tag">${esc(topic(q.topic).name)}</span><span class="muted" style="font-size:.85rem">${esc(q.sub)}</span></div>
+          <div class="row"><span class="tag">${esc(tname(topic(q.topic)))}</span><span class="muted" style="font-size:.85rem">${esc(loc(q).sub)}</span></div>
           <div class="preview" style="margin-top:6px">${esc(plain)}</div>
-          <div class="wmeta"><span class="badge bad">Wrong ${w.count}×</span><span class="badge warn">Last: ${chose}</span>
-            ${w.mastered ? '<span class="badge ok">Mastered</span>' : `<span class="badge ok">Streak ${w.streak || 0}/${MASTER_STREAK}</span>`}
+          <div class="wmeta"><span class="badge bad">${T('Wrong {n}×', { n: w.count })}</span><span class="badge warn">${T('Last: {x}', { x: chose })}</span>
+            ${w.mastered ? `<span class="badge ok">${T('Mastered')}</span>` : `<span class="badge ok">${T('Streak {s}/{m}', { s: w.streak || 0, m: MASTER_STREAK })}</span>`}
             ${w.last ? `<span class="muted">${fmtDate(w.last)}</span>` : ''}
-            <span class="spacer"></span><a class="muted" style="font-size:.85rem">Show question &amp; solution ▾</a></div>
+            <span class="spacer"></span><a class="muted" style="font-size:.85rem">${T('Show question &amp; solution ▾')}</a></div>
         </summary>
         <div style="margin-top:14px">${questionHTML(q, { chosen: w.chosen ?? null, reveal: true, clickable: false })}</div>
         </details>
-        <div style="margin-top:12px"><label class="muted" style="font-size:.85rem">My notes (why I got it wrong)</label>
-          <textarea data-note placeholder="e.g. forgot to convert °C to K"></textarea></div>
+        <div style="margin-top:12px"><label class="muted" style="font-size:.85rem">${T('My notes (why I got it wrong)')}</label>
+          <textarea data-note placeholder="${T('e.g. forgot to convert °C to K')}"></textarea></div>
         <div class="row" style="margin-top:8px">
-          <button class="btn small" data-redo>Redo this question</button>
+          <button class="btn small" data-redo>${T('Redo this question')}</button>
           <span class="spacer"></span>
-          ${w.mastered ? '<button class="btn small" data-unmaster>Move back to active</button>' : '<button class="btn small" data-master>Mark as mastered</button>'}
-          <button class="btn small danger" data-del>Remove</button>
+          ${w.mastered ? `<button class="btn small" data-unmaster>${T('Move back to active')}</button>` : `<button class="btn small" data-master>${T('Mark as mastered')}</button>`}
+          <button class="btn small danger" data-del>${T('Remove')}</button>
         </div></div>`;
     }).join('');
 
     app.innerHTML = `
-      <h1>Wrong question book <span class="zh">錯題簿</span></h1>
-      <p class="muted">Every question you get wrong is collected here. Get it right ${MASTER_STREAK} times in a row and it moves to Mastered.</p>
-      <div class="tabs"><button data-tab="active" class="${wrongTab === 'active' ? 'on' : ''}">Active (${nActive})</button>
-        <button data-tab="mastered" class="${wrongTab === 'mastered' ? 'on' : ''}">Mastered (${all.length - nActive})</button></div>
+      <h1>${T('Wrong question book')}${lang === 'zh' ? '' : ' <span class="zh">錯題簿</span>'}</h1>
+      <p class="muted">${T('Every question you get wrong is collected here. Get it right {m} times in a row and it moves to Mastered.', { m: MASTER_STREAK })}</p>
+      <div class="tabs"><button data-tab="active" class="${wrongTab === 'active' ? 'on' : ''}">${T('Active ({n})', { n: nActive })}</button>
+        <button data-tab="mastered" class="${wrongTab === 'mastered' ? 'on' : ''}">${T('Mastered ({n})', { n: all.length - nActive })}</button></div>
       <div class="row" style="margin-bottom:16px"><select id="wt">${topicOpts}</select><span class="spacer"></span>
-        ${wrongTab === 'active' ? `<button class="btn primary" id="redoAll" ${list.length ? '' : 'disabled'}>Redo ${list.length ? 'these ' + list.length : ''} questions</button>` : ''}</div>
-      ${cards || `<div class="card empty">${wrongTab === 'active' ? 'No wrong questions here. Keep practising!' : 'Nothing mastered yet.'}</div>`}`;
+        ${wrongTab === 'active' ? `<button class="btn primary" id="redoAll" ${list.length ? '' : 'disabled'}>${list.length ? T('Redo these {n} questions', { n: list.length }) : T('Redo questions')}</button>` : ''}</div>
+      ${cards || `<div class="card empty">${T(wrongTab === 'active' ? 'No wrong questions here. Keep practising!' : 'Nothing mastered yet.')}</div>`}`;
 
     app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { wrongTab = b.dataset.tab; renderWrong(); });
     document.getElementById('wt').onchange = e => { wrongTopic = e.target.value; renderWrong(); };
@@ -417,7 +450,7 @@
       const m = card.querySelector('[data-master]'); if (m) m.onclick = () => { w.mastered = true; save(); renderWrong(); };
       const u = card.querySelector('[data-unmaster]'); if (u) u.onclick = () => { w.mastered = false; w.streak = 0; save(); renderWrong(); };
       card.querySelector('[data-del]').onclick = () => {
-        if (confirm('Remove this question from the wrong book? Your note will be lost.')) { delete S.wrong[id]; save(); renderWrong(); }
+        if (confirm(T('Remove this question from the wrong book? Your note will be lost.'))) { delete S.wrong[id]; save(); renderWrong(); }
       };
     });
   }
@@ -438,17 +471,17 @@
       ['Boltzmann constant', 'k', '1.38 × 10⁻²³ J K⁻¹'],
       ['Planck constant', 'h', '6.63 × 10⁻³⁴ J s'],
       ['Coulomb constant', '1/(4πε₀)', '8.99 × 10⁹ N m² C⁻²']
-    ].map(r => `<tr><td>${r[0]}</td><td><i>${r[1]}</i></td><td>${r[2]}</td></tr>`).join('');
+    ].map(r => `<tr><td>${T(r[0])}</td><td><i>${r[1]}</i></td><td>${T(r[2])}</td></tr>`).join('');
     const tips = [
       'For "(1) (2) (3)" questions, judge each statement separately, then eliminate options — one false statement removes every option containing it.',
       'Always convert to SI units (cm → m, °C → K in gas laws, kW h → J) before substituting.',
       'There is no negative marking: never leave a question blank.',
       'Spend about 1.5–2 minutes per question; flag hard ones and come back.'
-    ].map(t => `<li>${t}</li>`).join('');
+    ].map(t => `<li>${T(t)}</li>`).join('');
     app.innerHTML = `
-      <h1>List of data</h1>
-      <div class="card"><table><tr><th>Quantity</th><th>Symbol</th><th>Value</th></tr>${rows}</table></div>
-      <div class="card"><h2>Section A tips</h2><ul>${tips}</ul></div>`;
+      <h1>${T('List of data')}</h1>
+      <div class="card"><table><tr><th>${T('Quantity')}</th><th>${T('Symbol')}</th><th>${T('Value')}</th></tr>${rows}</table></div>
+      <div class="card"><h2>${T('Section A tips')}</h2><ul>${tips}</ul></div>`;
   }
 
   /* ---------- global events ---------- */
@@ -469,6 +502,28 @@
   });
   window.addEventListener('hashchange', route);
 
+  // Text outside #app: page language, title, brand, nav, footer and the toggle button.
+  function applyChrome() {
+    document.documentElement.lang = lang === 'zh' ? 'zh-Hant-HK' : 'en';
+    document.title = T('DSE Physics Review');
+    document.querySelector('.brand').innerHTML = lang === 'zh' ? 'DSE 物理<span>溫習</span>' : 'DSE Physics <span>Review</span>';
+    document.querySelectorAll('[data-t]').forEach(el => {
+      if (!el.dataset.en) el.dataset.en = el.textContent.trim();
+      el.textContent = T(el.dataset.en);
+    });
+    const b = document.getElementById('langBtn');
+    b.textContent = lang === 'zh' ? 'English' : '中文';
+    b.lang = lang === 'zh' ? 'en' : 'zh-Hant-HK';
+    b.title = lang === 'zh' ? 'Switch to English' : '切換至繁體中文';
+  }
+  document.getElementById('langBtn').onclick = () => {
+    lang = lang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
+    applyChrome();
+    route();
+  };
+
+  applyChrome();
   updateBadge();
   route();
 })();

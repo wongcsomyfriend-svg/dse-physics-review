@@ -57,6 +57,7 @@ h2 { font-size: 1.2rem; }
 }
 #nav a:hover { background: var(--accent-soft); color: var(--ink); }
 #nav a.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.lang-btn { margin-left: auto; }
 .pill { display: inline-block; min-width: 1.4em; padding: 0 .4em; border-radius: 99px; background: var(--bad); color: #fff; font-size: .75rem; text-align: center; }
 .pill[hidden] { display: none; }
 
@@ -172,5 +173,7 @@ th { color: var(--muted); font-weight: 500; font-size: .85rem; }
   .bubbles { grid-template-columns: repeat(8, 1fr); }
   main { padding: 16px 16px 32px; }
   .topbar { position: static; }
+  .lang-btn { order: 1; }          /* keep the language button on the brand row */
+  #nav { order: 2; width: 100%; }
   .card { padding: 16px; }
 }
