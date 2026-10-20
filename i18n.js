@@ -175,6 +175,7 @@ window.I18N = {
   figure: {
     zh: {
       '>temperature<': '>溫度<',
+      '>time<': '>時間<',
       '>direction of travel<': '>傳播方向<',
       '>current into page<': '>電流流入紙面<'
     }

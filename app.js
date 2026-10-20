@@ -98,6 +98,13 @@
     for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
     return a;
   }
+  // Number variants of one template share a family. Keep one of each family first and push the
+  // repeats to the end, so a session doesn't serve the same idea twice before it runs out of others.
+  function spreadFamilies(ids) {
+    const used = new Set(), first = [], rest = [];
+    ids.forEach(id => { const f = byId[id].family || id; (used.has(f) ? rest : first).push(id); used.add(f); });
+    return first.concat(rest);
+  }
   const activeWrong = () => Object.keys(S.wrong).filter(id => byId[id] && !S.wrong[id].mastered);
   function fmtTime(sec) {
     sec = Math.max(0, Math.round(sec));
@@ -254,7 +261,7 @@
       if (document.getElementById('unseen').checked) {
         pool.sort((a, b) => (S.progress[a] ? 1 : 0) - (S.progress[b] ? 1 : 0));
       }
-      startSession('practice', pool.slice(0, +document.getElementById('n').value));
+      startSession('practice', spreadFamilies(pool).slice(0, +document.getElementById('n').value));
     };
   }
 
@@ -272,7 +279,7 @@
       </div>`;
     document.getElementById('start').onclick = () => {
       const ids = [];
-      TOPICS.forEach(t => ids.push(...shuffle(Q.filter(q => q.topic === t.id).map(q => q.id)).slice(0, t.mock)));
+      TOPICS.forEach(t => ids.push(...spreadFamilies(shuffle(Q.filter(q => q.topic === t.id).map(q => q.id))).slice(0, t.mock)));
       startSession('mock', ids);
     };
   }
