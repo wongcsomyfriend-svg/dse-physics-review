@@ -159,6 +159,27 @@ textarea { width: 100%; min-height: 60px; resize: vertical; }
 .bubbles button.cur { outline: 2px solid var(--ink); outline-offset: 1px; }
 .bubbles button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
 .bubbles button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.bubbles button.part { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+.bubbles button.sq { border-style: dashed; }
+
+/* structured questions */
+.sqtag { background: var(--warn-soft); color: var(--warn); }
+.parts { margin-top: 12px; }
+.part { border-top: 1px solid var(--line); padding: 12px 0 4px; }
+.partq { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
+.partq b { flex: 0 0 auto; }
+.partq span:first-of-type { flex: 1 1 260px; }
+.partq .marks { color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.scheme { margin-top: 10px; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); }
+.scheme .model div { margin: 4px 0 10px; }
+.points { display: grid; gap: 6px; margin-top: 4px; }
+.pt { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
+.pt input { margin-top: 4px; }
+.partscore { text-align: right; font-size: .85rem; margin-top: 6px; }
+.numcheck { margin: 0 0 10px; font-size: .9rem; font-weight: 600; }
+.numcheck.ok { color: var(--ok); }
+.numcheck.bad { color: var(--bad); }
+.sqtotal { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--ok-soft); border-left: 4px solid var(--ok); font-weight: 600; }
 .legend { font-size: .8rem; color: var(--muted); }
 
 /* wrong book */
@@ -190,3 +211,5 @@ th { color: var(--muted); font-weight: 500; font-size: .85rem; }
   #nav { order: 2; width: 100%; }
   .card { padding: 16px; }
 }
+.dtable { width: auto; margin: 8px 0; font-size: .92rem; }
+.dtable th, .dtable td { padding: 4px 10px; text-align: center; border: 1px solid var(--line); }

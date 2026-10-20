@@ -5,6 +5,12 @@
   const TOPICS = window.TOPICS;
   const LEVELS = window.LEVELS;
   const byId = Object.fromEntries(Q.map(q => [q.id, q]));
+  // Structured (Paper 1 Section B style) questions: a separate list with parts and marking points.
+  const SQ = window.STRUCTURED || [];
+  const SZQ = window.STRUCTURED_ZH || {};
+  const sqById = Object.fromEntries(SQ.map(q => [q.id, q]));
+  const isSQ = id => !!sqById[id];
+  const item = id => byId[id] || sqById[id];
   const LETTERS = ['A', 'B', 'C', 'D'];
   const KEY = 'dsephys.v1';
   const MOCK_MINUTES = 60;   // suggested time for Section A within the 2 h 30 min Paper 1
@@ -23,7 +29,7 @@
   let timerId = null;
 
   /* ---------- storage ---------- */
-  function blank() { return { progress: {}, wrong: {}, history: [] }; }
+  function blank() { return { progress: {}, wrong: {}, history: [], sq: {} }; }
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
@@ -102,7 +108,7 @@
   // repeats to the end, so a session doesn't serve the same idea twice before it runs out of others.
   function spreadFamilies(ids) {
     const used = new Set(), first = [], rest = [];
-    ids.forEach(id => { const f = byId[id].family || id; (used.has(f) ? rest : first).push(id); used.add(f); });
+    ids.forEach(id => { const f = item(id).family || id; (used.has(f) ? rest : first).push(id); used.add(f); });
     return first.concat(rest);
   }
   const activeWrong = () => Object.keys(S.wrong).filter(id => byId[id] && !S.wrong[id].mastered);
@@ -147,6 +153,82 @@
       <div class="stem">${q.stem}</div>${stmts}${fig}<div class="opts">${opts}</div>${exp}`;
   }
 
+  /* ---------- structured questions ---------- */
+  function locSQ(q) {
+    if (lang !== 'zh') return q;
+    const z = SZQ[q.id] || {};
+    let fig = q.figure;
+    if (fig) for (const [a, b] of Object.entries(I18N.figure.zh)) fig = fig.split(a).join(b);
+    return Object.assign({}, q, {
+      sub: z.sub || q.sub, stem: z.stem || q.stem, figure: fig,
+      parts: q.parts.map((p, i) => Object.assign({}, p, (z.parts || [])[i] || {}))
+    });
+  }
+  const sqMax = q => q.parts.reduce((t, p) => t + p.marks, 0);
+  const sqGot = st => (st.ticks || []).reduce((t, a) => t + (a || []).filter(Boolean).length, 0);
+  const newSQState = () => ({ texts: [], ticks: [], revealed: false });
+  // Read the last number a student typed, e.g. "2.4e5", "2.4 x 10^5", "2.4 × 10⁵" or "240000".
+  function parseNum(text) {
+    const sup = { '⁻': '-', '⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9 };
+    const t = String(text).replace(/[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, m => '^' + [...m].map(c => sup[c]).join('')).replace(/−/g, '-').replace(/,/g, '');
+    const re = /(-?\d+(?:\.\d+)?)(?:\s*(?:[x×*]\s*10\s*\^\s*\(?(-?\d+)\)?|e(-?\d+)))?/gi;
+    let m, last = null;
+    while ((m = re.exec(t))) {
+      if (m.index > 0 && t[m.index - 1] === '^') continue;   // a unit's power such as s⁻¹, not a value
+      last = Number(m[1]) * Math.pow(10, Number(m[2] || m[3] || 0));
+    }
+    return last;
+  }
+  const fmtNum = v => window.fmt ? window.fmt(v, 3) : String(Number(v.toPrecision(3)));
+  const markWord = n => T(n === 1 ? '{n} mark' : '{n} marks', { n });
+
+  function sqHTML(q, o) {
+    // o: { st, readonly, num, total }
+    q = locSQ(q);
+    const st = o.st, reveal = st.revealed;
+    const parts = q.parts.map((p, i) => {
+      const ticks = st.ticks[i] || [];
+      let check = '';
+      if (reveal && p.num) {
+        const v = parseNum(st.texts[i] || '');
+        if (v != null) {
+          const ok = Math.abs(v - p.num.v) <= (p.num.tol || 0.02) * Math.abs(p.num.v);
+          check = `<div class="numcheck ${ok ? 'ok' : 'bad'}">${T(ok ? 'Your final value {v} agrees with the answer.' : 'Your final value {v} does not agree with the answer.', { v: esc(fmtNum(v)) })}</div>`;
+        }
+      }
+      const scheme = reveal ? `<div class="scheme"><div class="model"><b>${T('Suggested answer')}</b><div>${p.answer}</div></div>${check}
+          <div class="points"><b>${T('Marking points — tick each one your answer contains')}</b>${p.points.map((pt, j) =>
+            `<label class="pt"><input type="checkbox" data-tick="${i}.${j}" ${ticks[j] ? 'checked' : ''} ${o.readonly ? 'disabled' : ''}><span>${pt}</span></label>`).join('')}</div>
+          <div class="muted partscore">${T('{a} / {b} marks', { a: ticks.filter(Boolean).length, b: p.marks })}</div></div>` : '';
+      return `<div class="part"><div class="partq"><b>${p.label}</b><span>${p.q}</span><span class="marks">(${markWord(p.marks)})</span></div>
+        <textarea data-part="${i}" rows="3" placeholder="${esc(T('Write your answer and working here'))}" ${o.readonly ? 'readonly' : ''}>${esc(st.texts[i] || '')}</textarea>${scheme}</div>`;
+    }).join('');
+    const t = topic(q.topic), max = sqMax(q);
+    const num = o.num != null ? `<span class="qnum">${o.num}.</span>` : '';
+    const of = o.total ? `<span>${T('of {n}', { n: o.total })}</span>` : '';
+    const foot = reveal
+      ? `<div class="sqtotal">${T('Your total: {a} / {b} marks', { a: sqGot(st), b: max })}</div>`
+      : (o.readonly ? '' : `<div class="row" style="margin-top:14px"><button class="btn primary" id="reveal">${T('Show marking scheme')}</button><span class="muted">${markWord(max)}</span></div>`);
+    return `<div class="qhead">${num}${of}<span class="tag sqtag">${T('Structured question')}</span><span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span>${lbadge(level(q.level))}</div>
+      <div class="stem">${q.stem}</div>${q.figure ? `<div class="figure">${q.figure}</div>` : ''}<div class="parts">${parts}</div>${foot}`;
+  }
+  // Save a structured attempt into the stored progress.
+  function recordSQ(id, st, isNew) {
+    const p = S.sq[id] || (S.sq[id] = { a: 0, best: 0, last: 0, max: sqMax(sqById[id]) });
+    if (isNew) p.a++;
+    p.last = sqGot(st); p.best = Math.max(p.best, p.last); p.max = sqMax(sqById[id]);
+  }
+  // Interleave structured questions evenly among multiple-choice ones.
+  function interleave(mc, sq) {
+    const n = mc.length + sq.length, out = [];
+    let mi = 0, si = 0;
+    for (let i = 0; i < n; i++) {
+      if (si < sq.length && (si < Math.floor((i + 1) * sq.length / n) || mi >= mc.length)) out.push(sq[si++]);
+      else out.push(mc[mi++]);
+    }
+    return out;
+  }
+
   /* ---------- router ---------- */
   function route() {
     stopTimer();
@@ -167,6 +249,8 @@
     ids.forEach(id => { a += S.progress[id].a; c += S.progress[id].c; });
     const mocks = S.history.filter(h => h.mode === 'mock');
     const best = mocks.length ? Math.max(...mocks.map(h => pct(h.score, h.total))) + '%' : '—';
+    const sqTried = Object.keys(S.sq || {}).filter(id => sqById[id] && S.sq[id].a);
+    const sqBest = sqTried.reduce((t, id) => t + S.sq[id].best, 0), sqMaxAll = sqTried.reduce((t, id) => t + S.sq[id].max, 0);
     const resume = session && !session.done
       ? `<div class="card row"><div><b>${T(session.mode === 'mock' ? 'Unfinished mock paper' : 'Unfinished practice')}</b><div class="muted">${T('Question {i} of {n}', { i: session.idx + 1, n: session.qs.length })}</div></div><span class="spacer"></span><button class="btn primary" data-go="quiz">${T('Resume')}</button></div>` : '';
 
@@ -180,16 +264,20 @@
 
     app.innerHTML = `
       <h1>${T('HKDSE Physics Revision')}</h1>
-      <p class="muted">${T('Paper 1 Section A style multiple-choice practice for the compulsory part. {n} questions in the bank.', { n: Q.length })}</p>
+      <p class="muted">${T('Multiple-choice and structured-question practice for the HKDSE Physics compulsory part: {n} multiple-choice and {s} structured questions.', { n: Q.length, s: SQ.length })}</p>
       ${resume}
       <div class="grid stats" style="margin-bottom:16px">
         <div class="stat"><b>${ids.length}<small class="muted" style="font-size:.9rem">/${Q.length}</small></b><span>${T('questions tried')}</span></div>
         <div class="stat"><b>${a ? pct(c, a) + '%' : '—'}</b><span>${T('overall accuracy')}</span></div>
         <div class="stat"><b>${activeWrong().length}</b><span>${T('in wrong book')}</span></div>
         <div class="stat"><b>${best}</b><span>${T('best mock score')}</span></div>
+        <div class="stat"><b>${sqTried.length}<small class="muted" style="font-size:.9rem">/${SQ.length}</small></b><span>${T('structured questions tried')}</span></div>
+        <div class="stat"><b>${sqTried.length ? pct(sqBest, sqMaxAll) + '%' : '—'}</b><span>${T('structured best marks')}</span></div>
       </div>
       <div class="card row">
-        <button class="btn primary" data-go="practice">${T('Start practice')}</button>
+        <button class="btn primary" data-go="practice" data-type="mc">${T('Start practice')}</button>
+        <button class="btn" data-go="practice" data-type="sq">${T('Practise structured questions')}</button>
+        <button class="btn" data-go="practice" data-type="mix">${T('Mixed practice')}</button>
         <button class="btn" data-go="mock">${T('Take a mock paper')}</button>
         <button class="btn" data-go="wrong">${T('Review wrong book')}</button>
       </div>
@@ -223,6 +311,12 @@
   }
 
   /* ---------- practice setup ---------- */
+  let practiceType = 'mc';   // 'mc' | 'sq' | 'mix'
+  const TYPES = [
+    ['mc', 'Multiple choice', 'Multiple-choice questions one at a time, with the solution after each.'],
+    ['sq', 'Structured', 'Paper 1 Section B style questions in several parts. Write your answers, then mark them yourself against the marking scheme.'],
+    ['mix', 'Mixed', 'About one structured question for every three multiple-choice questions, as in a real paper.']
+  ];
   function renderPractice() {
     const chips = TOPICS.map(t =>
       `<label class="chip on"><input type="checkbox" value="${t.id}" checked>${esc(tname(t))}<span class="zh">${esc(tother(t))}</span></label>`).join('');
@@ -232,6 +326,9 @@
       <h1>${T('Topic practice')}</h1>
       <p class="muted">${T('Answer one question at a time and see the worked solution immediately. Wrong answers go into your wrong book automatically.')}</p>
       <div class="card">
+        <h2>${T('Question type')}</h2>
+        <div class="tabs" id="qtype">${TYPES.map(([k, n]) => `<button data-qt="${k}" class="${practiceType === k ? 'on' : ''}">${T(n)}</button>`).join('')}</div>
+        <p class="muted" id="qtypeAbout" style="margin-top:-6px">${T(TYPES.find(t => t[0] === practiceType)[2])}</p>
         <h2>${T('Topics')}</h2><div class="chips" id="chips">${chips}</div>
         <h2 style="margin-top:18px">${T('Levels')}</h2><div class="chips" id="lchips">${lchips}</div>
         <ul class="muted lvlist">${LEVELS.map(l => `<li><b>${esc(lname(l))}</b> ${esc(T(l.about))}</li>`).join('')}</ul>
@@ -244,11 +341,22 @@
       </div>`;
     const chipsEl = document.getElementById('chips'), lchipsEl = document.getElementById('lchips'), msg = document.getElementById('msg');
     const picked = el => [...el.querySelectorAll('input:checked')].map(i => i.value);
-    const matching = () => {
+    const pick = list => {
       const tsel = picked(chipsEl), lsel = picked(lchipsEl).map(Number);
-      return Q.filter(q => tsel.includes(q.topic) && lsel.includes(q.level));
+      return list.filter(q => tsel.includes(q.topic) && lsel.includes(q.level));
     };
-    const showCount = () => { msg.textContent = T('{n} questions match', { n: matching().length }); };
+    const matching = () => pick(Q);
+    const showCount = () => {
+      msg.textContent = practiceType === 'mc' ? T('{n} questions match', { n: matching().length })
+        : practiceType === 'sq' ? T('{n} questions match', { n: pick(SQ).length })
+        : T('{m} multiple-choice and {s} structured questions match', { m: matching().length, s: pick(SQ).length });
+    };
+    app.querySelectorAll('[data-qt]').forEach(b => b.onclick = () => {
+      practiceType = b.dataset.qt;
+      app.querySelectorAll('[data-qt]').forEach(x => x.classList.toggle('on', x === b));
+      document.getElementById('qtypeAbout').textContent = T(TYPES.find(t => t[0] === practiceType)[2]);
+      showCount();
+    });
     [chipsEl, lchipsEl].forEach(el => el.addEventListener('change', e => {
       e.target.closest('.chip').classList.toggle('on', e.target.checked);
       showCount();
@@ -257,11 +365,22 @@
     document.getElementById('start').onclick = () => {
       if (!picked(chipsEl).length) { msg.textContent = T('Pick at least one topic.'); return; }
       if (!picked(lchipsEl).length) { msg.textContent = T('Pick at least one level.'); return; }
-      let pool = shuffle(matching().map(q => q.id));
-      if (document.getElementById('unseen').checked) {
-        pool.sort((a, b) => (S.progress[a] ? 1 : 0) - (S.progress[b] ? 1 : 0));
+      const n = +document.getElementById('n').value, unseen = document.getElementById('unseen').checked;
+      let mc = shuffle(matching().map(q => q.id)), sq = shuffle(pick(SQ).map(q => q.id));
+      if (unseen) {
+        mc.sort((a, b) => (S.progress[a] ? 1 : 0) - (S.progress[b] ? 1 : 0));
+        sq.sort((a, b) => (S.sq[a] && S.sq[a].a ? 1 : 0) - (S.sq[b] && S.sq[b].a ? 1 : 0));
       }
-      startSession('practice', spreadFamilies(pool).slice(0, +document.getElementById('n').value));
+      mc = spreadFamilies(mc);
+      let ids;
+      if (practiceType === 'mc') ids = mc.slice(0, n);
+      else if (practiceType === 'sq') ids = sq.slice(0, n);
+      else {
+        const ns = n >= 999 ? sq.length : Math.min(sq.length, Math.max(1, Math.round(n / 4)));
+        ids = interleave(mc.slice(0, n >= 999 ? mc.length : n - ns), sq.slice(0, ns));
+      }
+      if (!ids.length) { msg.textContent = T('No questions match. Choose more topics or levels.'); return; }
+      startSession('practice', ids);
     };
   }
 
@@ -286,7 +405,7 @@
 
   /* ---------- quiz session ---------- */
   function startSession(mode, ids) {
-    session = { mode, qs: ids, idx: 0, answers: {}, flags: {}, start: Date.now(), done: false };
+    session = { mode, qs: ids, idx: 0, answers: {}, sq: {}, flags: {}, start: Date.now(), done: false };
     if (mode === 'mock') session.deadline = Date.now() + MOCK_MINUTES * 60000;
     go('quiz');
   }
@@ -303,15 +422,23 @@
     const s = session;
     if (s.done) { go('result'); return; }
     const mock = s.mode === 'mock';
-    const id = s.qs[s.idx], q = byId[id], chosen = s.answers[id];
+    const id = s.qs[s.idx], q = item(id), chosen = s.answers[id], sqMode = isSQ(id);
+    const st = sqMode ? (s.sq[id] || (s.sq[id] = newSQState())) : null;
     const reveal = !mock && chosen != null;
-    const answered = Object.keys(s.answers).length;
+    const done = qid => isSQ(qid) ? !!(s.sq[qid] && s.sq[qid].revealed) : s.answers[qid] != null;
+    const answered = s.qs.filter(done).length;
+    const hasSQ = s.qs.some(isSQ);
     const last = s.idx === s.qs.length - 1;
 
     const title = T(mock ? 'Mock paper' : s.mode === 'redo' ? 'Wrong book redo' : 'Practice');
     const bubbles = s.qs.map((qid, i) => {
       let cls = '';
       if (mock) cls = s.answers[qid] != null ? 'ans' : '';
+      else if (isSQ(qid)) {
+        const x = s.sq[qid];
+        if (x && x.revealed) { const g = sqGot(x), m = sqMax(sqById[qid]); cls = g === m ? 'right' : g * 2 >= m ? 'part' : 'wrong'; }
+        cls += ' sq';
+      }
       else if (s.answers[qid] != null) cls = s.answers[qid] === byId[qid].answer ? 'right' : 'wrong';
       if (s.flags[qid]) cls += ' flag';
       if (i === s.idx) cls += ' cur';
@@ -324,19 +451,19 @@
         <span class="muted">${T('{a} / {n} answered', { a: answered, n: s.qs.length })}</span></div>
       <div class="qwrap">
         <div class="card">
-          ${questionHTML(q, { chosen, reveal, clickable: mock || chosen == null, num: s.idx + 1, total: s.qs.length })}
+          ${sqMode ? sqHTML(q, { st, num: s.idx + 1, total: s.qs.length }) : questionHTML(q, { chosen, reveal, clickable: mock || chosen == null, num: s.idx + 1, total: s.qs.length })}
           <div class="row qnav">
             <button class="btn" id="prev" ${s.idx === 0 ? 'disabled' : ''}>${T('← Previous')}</button>
             ${mock ? `<button class="btn small" id="flag">${T(s.flags[id] ? 'Unflag' : 'Flag for review')}</button>` : ''}
             <span class="spacer"></span>
-            ${last ? (mock ? '' : `<button class="btn primary" id="end" ${chosen == null ? 'disabled' : ''}>${T('See summary')}</button>`)
+            ${last ? (mock ? '' : `<button class="btn primary" id="end" ${answered ? '' : 'disabled'}>${T('See summary')}</button>`)
                    : `<button class="btn ${mock || reveal ? 'primary' : ''}" id="next">${T('Next →')}</button>`}
           </div>
         </div>
         <aside class="card sheet">
           ${mock ? `<div class="muted" style="font-size:.85rem">${T('Time left')}</div><div class="timer" id="timer">${fmtTime((s.deadline - Date.now()) / 1000)}</div>` : `<b>${T('Questions')}</b>`}
           <div class="bubbles">${bubbles}</div>
-          <div class="legend">${T(mock ? 'Blue = answered · orange line = flagged' : 'Green = correct · red = wrong')}<br>${T('Keys: A–D to answer, ← → to move')}</div>
+          <div class="legend">${T(mock ? 'Blue = answered · orange line = flagged' : hasSQ ? 'Green = correct or full marks · orange = at least half marks · red = wrong' : 'Green = correct · red = wrong')}${hasSQ ? '<br>' + T('Dashed = structured question') : ''}<br>${T('Keys: A–D to answer, ← → to move')}</div>
           ${mock ? `<button class="btn primary" id="submit" style="width:100%;justify-content:center;margin-top:12px">${T('Hand in paper')}</button>`
                  : `<button class="btn small" id="quit" style="margin-top:12px">${T('End session')}</button>`}
         </aside>
@@ -348,7 +475,17 @@
     on('prev', () => move(-1));
     on('next', () => move(1));
     on('end', finish);
-    on('quit', () => { if (Object.keys(s.answers).length) finish(); else { session = null; go('home'); } });
+    on('quit', () => { if (answered) finish(); else { session = null; go('home'); } });
+    if (sqMode) {
+      app.querySelectorAll('[data-part]').forEach(t => t.oninput = () => { st.texts[+t.dataset.part] = t.value; });
+      on('reveal', () => { st.revealed = true; recordSQ(id, st, true); save(); renderQuiz(); });
+      app.querySelectorAll('[data-tick]').forEach(c => c.onchange = () => {
+        const [i, j] = c.dataset.tick.split('.').map(Number);
+        (st.ticks[i] || (st.ticks[i] = []))[j] = c.checked;
+        recordSQ(id, st, false); save();
+        const y = window.scrollY; renderQuiz(); window.scrollTo(0, y);
+      });
+    }
     on('flag', () => { s.flags[id] = !s.flags[id]; renderQuiz(); });
     on('submit', () => {
       const blank = s.qs.length - Object.keys(s.answers).length;
@@ -360,6 +497,7 @@
 
   function choose(i) {
     const s = session, id = s.qs[s.idx];
+    if (isSQ(id)) return;
     if (s.mode === 'mock') { s.answers[id] = i; renderQuiz(); return; }
     if (s.answers[id] != null) return;
     s.answers[id] = i; record(id, i); save(); renderQuiz();
@@ -375,11 +513,15 @@
     if (!s || s.done) return;
     stopTimer();
     if (s.mode === 'mock') s.qs.forEach(id => record(id, s.answers[id] ?? null));
-    else s.qs = s.qs.filter(id => s.answers[id] != null); // practice: summarise only what was attempted
+    else s.qs = s.qs.filter(id => isSQ(id) ? s.sq[id] && s.sq[id].revealed : s.answers[id] != null); // practice: summarise only what was attempted
     s.done = true;
     s.secs = (Date.now() - s.start) / 1000;
-    s.score = s.qs.filter(id => s.answers[id] === byId[id].answer).length;
-    S.history.push({ date: Date.now(), mode: s.mode, score: s.score, total: s.qs.length, secs: s.secs });
+    s.mcIds = s.qs.filter(id => !isSQ(id));
+    s.sqIds = s.qs.filter(isSQ);
+    s.score = s.mcIds.filter(id => s.answers[id] === byId[id].answer).length;
+    s.sqGot = s.sqIds.reduce((t, id) => t + sqGot(s.sq[id]), 0);
+    s.sqMax = s.sqIds.reduce((t, id) => t + sqMax(sqById[id]), 0);
+    S.history.push({ date: Date.now(), mode: s.mode, score: s.score, total: s.mcIds.length, sqGot: s.sqGot, sqMax: s.sqMax, secs: s.secs });
     if (S.history.length > 200) S.history = S.history.slice(-200);
     save();
     go('result');
@@ -393,27 +535,40 @@
       const c = ids.filter(id => s.answers[id] === byId[id].answer).length;
       return `<tr><td>${label}</td><td>${c} / ${ids.length}</td><td style="width:40%"><div class="bar"><i style="width:${pct(c, ids.length)}%"></i></div></td></tr>`;
     };
-    const rows = TOPICS.map(t => row(esc(tname(t)), s.qs.filter(id => byId[id].topic === t.id))).join('');
-    const lrows = LEVELS.map(l => row(lbadge(l), s.qs.filter(id => byId[id].level === l.id))).join('');
-    const wrongN = s.qs.length - s.score;
+    const mcIds = s.mcIds || s.qs, sqIds = s.sqIds || [];
+    const rows = TOPICS.map(t => row(esc(tname(t)), mcIds.filter(id => byId[id].topic === t.id))).join('');
+    const lrows = LEVELS.map(l => row(lbadge(l), mcIds.filter(id => byId[id].level === l.id))).join('');
+    const sqFull = id => sqGot(s.sq[id]) === sqMax(sqById[id]);
+    const wrongN = mcIds.length - s.score + sqIds.filter(id => !sqFull(id)).length;
+    const sqRows = sqIds.map(id => { const g = sqGot(s.sq[id]), m = sqMax(sqById[id]);
+      return `<tr><td>${esc(locSQ(sqById[id]).sub)} ${lbadge(level(sqById[id].level))}</td><td>${g} / ${m}</td><td style="width:40%"><div class="bar"><i style="width:${pct(g, m)}%"></i></div></td></tr>`; }).join('');
+    const scoreLine = [mcIds.length ? T('Multiple choice: {a} / {n}', { a: s.score, n: mcIds.length }) : '',
+      sqIds.length ? T('Structured: {a} / {b} marks', { a: s.sqGot, b: s.sqMax }) : ''].filter(Boolean).join(' · ');
+    const mainScore = mcIds.length ? `${s.score} / ${mcIds.length}` : `${s.sqGot} / ${s.sqMax}`;
+    const mainPct = mcIds.length ? pct(s.score, mcIds.length) : pct(s.sqGot, s.sqMax);
     app.innerHTML = `
       <h1>${T(s.mode === 'mock' ? 'Mock paper result' : 'Session summary')}</h1>
       <div class="card row">
-        <div><div class="score">${s.score} / ${s.qs.length}</div><div class="muted">${T('{p}% · time used {t}', { p: pct(s.score, s.qs.length), t: fmtTime(s.secs) })}</div></div>
+        <div><div class="score">${mainScore}</div><div class="muted">${T('{p}% · time used {t}', { p: mainPct, t: fmtTime(s.secs) })}</div>${mcIds.length && sqIds.length ? `<div class="muted">${scoreLine}</div>` : ''}</div>
         <span class="spacer"></span>
         <div class="row">
-          ${wrongN ? `<button class="btn" data-go="wrong">${T('Open wrong book ({n})', { n: activeWrong().length })}</button>` : ''}
+          ${mcIds.length - s.score ? `<button class="btn" data-go="wrong">${T('Open wrong book ({n})', { n: activeWrong().length })}</button>` : ''}
           <button class="btn primary" data-go="${s.mode === 'mock' ? 'mock' : s.mode === 'redo' ? 'wrong' : 'practice'}">${T(s.mode === 'mock' ? 'New mock paper' : 'Practise again')}</button>
         </div>
       </div>
-      ${s.qs.length ? `<div class="grid two"><div class="card"><h2>${T('By topic')}</h2><table>${rows}</table></div>
+      ${mcIds.length ? `<div class="grid two"><div class="card"><h2>${T('By topic')}</h2><table>${rows}</table></div>
         <div class="card"><h2>${T('By level')}</h2><table>${lrows}</table></div></div>` : ''}
+      ${sqIds.length ? `<div class="card"><h2>${T('Structured questions')}</h2><table>${sqRows}</table></div>` : ''}
       <div class="row" style="margin:8px 0 12px"><h2 style="margin:0">${T('Review')}</h2><span class="spacer"></span>
         <label class="row" style="gap:6px"><input type="checkbox" id="onlyWrong" ${wrongN ? 'checked' : ''}> ${T('Show wrong answers only')}</label></div>
       <div id="review"></div>`;
     const draw = () => {
       const only = document.getElementById('onlyWrong').checked;
       const html = s.qs.map((id, i) => {
+        if (isSQ(id)) {
+          if (only && sqFull(id)) return '';
+          return `<div class="card">${sqHTML(sqById[id], { st: s.sq[id], readonly: true, num: i + 1 })}</div>`;
+        }
         const q = byId[id], ok = s.answers[id] === q.answer;
         if (only && ok) return '';
         return `<div class="card">${questionHTML(q, { chosen: s.answers[id] ?? null, reveal: true, clickable: false, num: i + 1 })}</div>`;
@@ -524,11 +679,12 @@
   /* ---------- global events ---------- */
   document.addEventListener('click', e => {
     const g = e.target.closest('[data-go]');
-    if (g) { e.preventDefault(); go(g.dataset.go); }
+    if (g) { e.preventDefault(); if (g.dataset.type) practiceType = g.dataset.type; go(g.dataset.go); }
   });
   document.addEventListener('keydown', e => {
     if (location.hash !== '#/quiz' || !session || session.done) return;
     if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (isSQ(session.qs[session.idx]) && !/^Arrow/.test(e.key)) return;
     const k = e.key.toLowerCase();
     const i = 'abcd'.indexOf(k);
     if (i >= 0 && k.length === 1) {

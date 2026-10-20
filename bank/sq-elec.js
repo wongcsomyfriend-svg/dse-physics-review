@@ -1,0 +1,167 @@
+/* Electricity and Magnetism — structured questions (Paper 1 Section B style). Format: see bank/core.js (addStructured). */
+addStructured([
+  {
+    id: 'SE01', topic: 'elec', level: 3, sub: 'Internal resistance',
+    stem: 'A battery of e.m.f. 6.0 V is connected to a 4.0 Ω resistor. The current is 1.2 A.',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the terminal p.d. of the battery.', answer: 'V = IR = 1.2 × 4.0 = 4.8 V.', points: ['4.8 V [1]'], num: { v: 4.8, unit: 'V' } },
+      { label: '(b)', marks: 2, q: 'Find the internal resistance of the battery.', answer: 'ε = V + Ir ⇒ r = (6.0 − 4.8) / 1.2 = 1.0 Ω.', points: ['ε = V + Ir (lost volts = 1.2 V) [1M]', 'r = 1.0 Ω [1A]'], num: { v: 1.0, unit: 'Ω' } },
+      { label: '(c)', marks: 1, q: 'Find the power delivered to the 4.0 Ω resistor.', answer: 'P = I²R = 1.2² × 4.0 = 5.76 W.', points: ['5.76 W [1]'], num: { v: 5.76, unit: 'W' } },
+      { label: '(d)', marks: 2, q: 'A second 4.0 Ω resistor is connected in parallel with the first. Find the new terminal p.d.', answer: 'External resistance = 2.0 Ω, so I = 6.0 / (2.0 + 1.0) = 2.0 A and V = 6.0 − 2.0 × 1.0 = 4.0 V.', points: ['I = 6.0 / 3.0 = 2.0 A [1M]', 'V = 4.0 V [1A]'], num: { v: 4.0, unit: 'V' } }
+    ],
+    zh: {
+      sub: '內阻',
+      stem: '一個電動勢為 6.0 V 的電池連接到一個 4.0 Ω 的電阻器，電流為 1.2 A。',
+      parts: [
+        { q: '求電池的端電壓。', answer: 'V = IR = 1.2 × 4.0 = 4.8 V。', points: ['4.8 V [1]'] },
+        { q: '求電池的內阻。', answer: 'ε = V + Ir ⇒ r = (6.0 − 4.8) / 1.2 = 1.0 Ω。', points: ['ε = V + Ir（損失電壓 = 1.2 V）[1M]', 'r = 1.0 Ω [1A]'] },
+        { q: '求 4.0 Ω 電阻器得到的功率。', answer: 'P = I²R = 1.2² × 4.0 = 5.76 W。', points: ['5.76 W [1]'] },
+        { q: '把第二個 4.0 Ω 電阻器與第一個並聯。求新的端電壓。', answer: '外電阻 = 2.0 Ω，所以 I = 6.0 / (2.0 + 1.0) = 2.0 A，V = 6.0 − 2.0 × 1.0 = 4.0 V。', points: ['I = 6.0 / 3.0 = 2.0 A [1M]', 'V = 4.0 V [1A]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE02', topic: 'elec', level: 3, sub: 'Domestic electricity',
+    stem: 'An electric kettle is rated "220 V, 2200 W". It has a metal casing and is connected to the mains by a three-pin plug.',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the current in the kettle when it works normally.', answer: 'I = P / V = 2200 / 220 = 10 A.', points: ['10 A [1]'], num: { v: 10, unit: 'A' } },
+      { label: '(b)', marks: 1, q: 'Which of the fuses 3 A, 5 A, 13 A is the most suitable? Why?', answer: '13 A: the fuse rating must be a little above the normal current (10 A), otherwise the fuse would blow in normal use.', points: ['13 A, just above the normal current [1]'] },
+      { label: '(c)', marks: 2, q: 'The kettle is used for 15 minutes a day for 30 days. Electricity costs $1.2 per kW h. Find the cost.', answer: 'Energy = 2.2 kW × 0.25 h × 30 = 16.5 kW h. Cost = 16.5 × $1.2 = $19.8.', points: ['Energy = 16.5 kW h [1M]', '$19.8 [1A]'], num: { v: 19.8, unit: '$' } },
+      { label: '(d)', marks: 2, q: 'Explain how the earth wire protects the user if the live wire touches the metal casing.', answer: 'The earth wire connects the casing to the ground through a very low resistance. A large current flows to earth, which blows the fuse and cuts off the live supply, so the casing does not stay live.', points: ['Low-resistance path to earth gives a large current [1]', 'Fuse blows, disconnecting the live wire [1]'] }
+    ],
+    zh: {
+      sub: '家居用電',
+      stem: '一個電水壺的額定值為「220 V, 2200 W」。它有金屬外殼，以三腳插頭連接電源。',
+      parts: [
+        { q: '求電水壺正常運作時的電流。', answer: 'I = P / V = 2200 / 220 = 10 A。', points: ['10 A [1]'] },
+        { q: '3 A、5 A、13 A 的保險絲中哪一個最適合？為甚麼？', answer: '13 A：保險絲的額定值應略高於正常電流（10 A），否則正常使用時便會熔斷。', points: ['13 A，略高於正常電流 [1]'] },
+        { q: '電水壺每天使用 15 分鐘，共 30 天。電費為每 kW h $1.2。求電費。', answer: '能量 = 2.2 kW × 0.25 h × 30 = 16.5 kW h。電費 = 16.5 × $1.2 = $19.8。', points: ['能量 = 16.5 kW h [1M]', '$19.8 [1A]'] },
+        { q: '解釋若火線碰到金屬外殼，地線怎樣保護使用者。', answer: '地線以極低的電阻把外殼連接到大地。大電流流向大地，令保險絲熔斷，切斷火線電源，所以外殼不會一直帶電。', points: ['通往大地的低電阻通路產生大電流 [1]', '保險絲熔斷，切斷火線 [1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE03', topic: 'elec', level: 4, sub: 'Electric field',
+    stem: 'Two horizontal parallel plates 5.0 cm apart are connected to a 2000 V supply. A tiny charged oil drop carrying a charge of −3.2 × 10⁻¹⁹ C is held stationary between them. (g = 9.81 m s⁻²)',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the electric field strength between the plates.', answer: 'E = V / d = 2000 / 0.050 = 4.0 × 10⁴ V m⁻¹.', points: ['4.0 × 10⁴ V m⁻¹ [1]'], num: { v: 4.0e4, unit: 'V m⁻¹' } },
+      { label: '(b)', marks: 1, q: 'Find the size of the electric force on the drop.', answer: 'F = qE = 3.2 × 10⁻¹⁹ × 4.0 × 10⁴ = 1.28 × 10⁻¹⁴ N.', points: ['1.28 × 10⁻¹⁴ N [1]'], num: { v: 1.28e-14, unit: 'N' } },
+      { label: '(c)', marks: 2, q: 'Find the mass of the drop.', answer: 'The electric force balances the weight: mg = qE ⇒ m = 1.28 × 10⁻¹⁴ / 9.81 = 1.30 × 10⁻¹⁵ kg.', points: ['mg = qE [1M]', '1.30 × 10⁻¹⁵ kg [1A]'], num: { v: 1.305e-15, unit: 'kg' } },
+      { label: '(d)', marks: 2, q: 'Which plate is positive? Explain.', answer: 'The upper plate. The electric force on the drop must be upwards to balance its weight; a negative charge is pulled towards the positive plate.', points: ['Upper plate [1]', 'Force on the negative drop must be upwards, towards the positive plate [1]'] }
+    ],
+    zh: {
+      sub: '電場',
+      stem: '兩塊相距 5.0 cm 的水平平行金屬板連接到 2000 V 的電源。一粒帶 −3.2 × 10⁻¹⁹ C 電荷的微小油滴靜止在兩板之間。（g = 9.81 m s⁻²）',
+      parts: [
+        { q: '求兩板之間的電場強度。', answer: 'E = V / d = 2000 / 0.050 = 4.0 × 10⁴ V m⁻¹。', points: ['4.0 × 10⁴ V m⁻¹ [1]'] },
+        { q: '求油滴所受電力的大小。', answer: 'F = qE = 3.2 × 10⁻¹⁹ × 4.0 × 10⁴ = 1.28 × 10⁻¹⁴ N。', points: ['1.28 × 10⁻¹⁴ N [1]'] },
+        { q: '求油滴的質量。', answer: '電力與重量平衡：mg = qE ⇒ m = 1.28 × 10⁻¹⁴ / 9.81 = 1.30 × 10⁻¹⁵ kg。', points: ['mg = qE [1M]', '1.30 × 10⁻¹⁵ kg [1A]'] },
+        { q: '哪一塊板帶正電？解釋。', answer: '上板。油滴所受的電力必須向上，才能與重量平衡；負電荷被吸向正板。', points: ['上板 [1]', '負電油滴所受的力須向上，即指向正板 [1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE04', topic: 'elec', level: 4, sub: 'Magnetic force',
+    stem: 'A straight wire 5.0 cm long carrying a current of 2.0 A lies between the poles of a magnet, at right angles to a uniform magnetic field of 0.30 T. (Charge of electron = 1.60 × 10⁻¹⁹ C)',
+    parts: [
+      { label: '(a)', marks: 2, q: 'Find the magnetic force on the wire.', answer: 'F = BIL = 0.30 × 2.0 × 0.050 = 0.030 N.', points: ['F = BIL with L in metres [1M]', '0.030 N [1A]'], num: { v: 0.030, unit: 'N' } },
+      { label: '(b)', marks: 1, q: 'The field points from left to right and the current flows into the page. In which direction is the force?', answer: 'Downwards (Fleming\'s left-hand rule).', points: ['Downwards [1]'] },
+      { label: '(c)', marks: 1, q: 'An electron moves at 2.0 × 10⁶ m s⁻¹ at right angles to the same field. Find the magnetic force on it.', answer: 'F = BQv = 0.30 × 1.60 × 10⁻¹⁹ × 2.0 × 10⁶ = 9.6 × 10⁻¹⁴ N.', points: ['9.6 × 10⁻¹⁴ N [1]'], num: { v: 9.6e-14, unit: 'N' } },
+      { label: '(d)', marks: 2, q: 'Explain why this force does not change the speed of the electron.', answer: 'The magnetic force is always perpendicular to the electron\'s velocity, so it does no work on the electron. Its kinetic energy, and hence its speed, stay the same; only the direction changes (it moves in a circle).', points: ['Force always perpendicular to the velocity [1]', 'No work done, so KE (speed) unchanged [1]'] }
+    ],
+    zh: {
+      sub: '磁力',
+      stem: '一條長 5.0 cm、載有 2.0 A 電流的直導線放在磁鐵兩極之間，與 0.30 T 的均勻磁場垂直。（電子電荷 = 1.60 × 10⁻¹⁹ C）',
+      parts: [
+        { q: '求導線所受的磁力。', answer: 'F = BIL = 0.30 × 2.0 × 0.050 = 0.030 N。', points: ['F = BIL，L 以米為單位 [1M]', '0.030 N [1A]'] },
+        { q: '磁場由左指向右，電流流入紙面。力的方向是怎樣的？', answer: '向下（弗林明左手定則）。', points: ['向下 [1]'] },
+        { q: '一個電子以 2.0 × 10⁶ m s⁻¹ 垂直於同一磁場運動。求它所受的磁力。', answer: 'F = BQv = 0.30 × 1.60 × 10⁻¹⁹ × 2.0 × 10⁶ = 9.6 × 10⁻¹⁴ N。', points: ['9.6 × 10⁻¹⁴ N [1]'] },
+        { q: '解釋為甚麼這個力不會改變電子的速率。', answer: '磁力總是垂直於電子的速度，所以不對電子做功。它的動能以至速率保持不變；只有方向改變（作圓周運動）。', points: ['力總是垂直於速度 [1]', '不做功，所以動能（速率）不變 [1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE05', topic: 'elec', level: 5, sub: 'Electromagnetic induction',
+    stem: 'A metal rod 0.20 m long slides at a steady 3.0 m s⁻¹ along two parallel horizontal rails joined by a 1.5 Ω resistor. A uniform vertical magnetic field of 0.50 T acts. Ignore friction and the resistance of the rod and rails.',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the induced e.m.f.', answer: 'ε = Blv = 0.50 × 0.20 × 3.0 = 0.30 V.', points: ['0.30 V [1]'], num: { v: 0.30, unit: 'V' } },
+      { label: '(b)', marks: 1, q: 'Find the induced current.', answer: 'I = ε / R = 0.30 / 1.5 = 0.20 A.', points: ['0.20 A [1]'], num: { v: 0.20, unit: 'A' } },
+      { label: '(c)', marks: 1, q: 'Find the magnetic force on the rod.', answer: 'F = BIL = 0.50 × 0.20 × 0.20 = 0.020 N, opposing the motion.', points: ['0.020 N [1]'], num: { v: 0.020, unit: 'N' } },
+      { label: '(d)', marks: 2, q: 'Find the power needed to keep the rod moving, and show that it equals the power dissipated in the resistor.', answer: 'Mechanical power = Fv = 0.020 × 3.0 = 0.060 W. Electrical power = I²R = 0.20² × 1.5 = 0.060 W. They are equal.', points: ['Fv = 0.060 W [1]', 'I²R = 0.060 W, the same [1]'], num: { v: 0.060, unit: 'W' } },
+      { label: '(e)', marks: 1, q: 'Explain, in terms of energy, why a force is needed to keep the rod moving at constant speed.', answer: 'Electrical energy is continuously converted to heat in the resistor, so work must be done on the rod to supply this energy (Lenz\'s law: the induced current opposes the motion).', points: ['Work must be done to supply the electrical energy dissipated (Lenz\'s law) [1]'] }
+    ],
+    zh: {
+      sub: '電磁感應',
+      stem: '一根長 0.20 m 的金屬棒以穩定的 3.0 m s⁻¹ 沿兩條平行的水平路軌滑動，路軌以一個 1.5 Ω 的電阻器連接。均勻的垂直磁場為 0.50 T。忽略摩擦力以及棒和路軌的電阻。',
+      parts: [
+        { q: '求感生電動勢。', answer: 'ε = Blv = 0.50 × 0.20 × 3.0 = 0.30 V。', points: ['0.30 V [1]'] },
+        { q: '求感生電流。', answer: 'I = ε / R = 0.30 / 1.5 = 0.20 A。', points: ['0.20 A [1]'] },
+        { q: '求棒所受的磁力。', answer: 'F = BIL = 0.50 × 0.20 × 0.20 = 0.020 N，方向阻礙運動。', points: ['0.020 N [1]'] },
+        { q: '求保持棒移動所需的功率，並證明它等於電阻器消耗的功率。', answer: '機械功率 = Fv = 0.020 × 3.0 = 0.060 W。電功率 = I²R = 0.20² × 1.5 = 0.060 W。兩者相等。', points: ['Fv = 0.060 W [1]', 'I²R = 0.060 W，兩者相同 [1]'] },
+        { q: '從能量角度解釋為甚麼需要施力才能使棒保持等速移動。', answer: '電能不斷在電阻器中轉化為熱，所以必須對棒做功以供應這些能量（楞次定律：感生電流阻礙運動）。', points: ['須做功以供應消耗的電能（楞次定律）[1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE06', topic: 'elec', level: 5, sub: 'Power transmission',
+    stem: 'A power station generates electricity at 11 kV. A transformer steps this up to 132 kV, and 66 MW is sent along transmission cables of total resistance 4.0 Ω.',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the turns ratio N<sub>p</sub> : N<sub>s</sub> of the step-up transformer (assume it is ideal).', answer: 'N<sub>p</sub> / N<sub>s</sub> = 11 / 132 = 1 : 12.', points: ['1 : 12 [1]'] },
+      { label: '(b)', marks: 1, q: 'Find the current in the cables.', answer: 'I = P / V = 66 × 10⁶ / 132 × 10³ = 500 A.', points: ['500 A [1]'], num: { v: 500, unit: 'A' } },
+      { label: '(c)', marks: 2, q: 'Find the power lost in the cables.', answer: 'P<sub>loss</sub> = I²R = 500² × 4.0 = 1.0 × 10⁶ W (1.0 MW, about 1.5 %).', points: ['I²R [1M]', '1.0 × 10⁶ W [1A]'], num: { v: 1.0e6, unit: 'W' } },
+      { label: '(d)', marks: 2, q: 'Explain why it would be impossible to send the same power at 11 kV through these cables.', answer: 'At 11 kV the current would be 66 × 10⁶ / 11 × 10³ = 6000 A, giving a loss of 6000² × 4.0 = 1.44 × 10⁸ W — more than the 66 MW being sent. The voltage drop across the cables (6000 × 4.0 = 24 kV) would also exceed the supply voltage.', points: ['Current would be 6000 A [1]', 'Loss (144 MW) would exceed the power sent [1]'] }
+    ],
+    zh: {
+      sub: '電力傳輸',
+      stem: '一間發電廠以 11 kV 發電，變壓器把電壓升至 132 kV，再經總電阻為 4.0 Ω 的輸電纜輸送 66 MW 的電功率。',
+      parts: [
+        { q: '求升壓變壓器的匝數比 N<sub>p</sub> : N<sub>s</sub>（假設變壓器是理想的）。', answer: 'N<sub>p</sub> / N<sub>s</sub> = 11 / 132 = 1 : 12。', points: ['1 : 12 [1]'] },
+        { q: '求電纜中的電流。', answer: 'I = P / V = 66 × 10⁶ / 132 × 10³ = 500 A。', points: ['500 A [1]'] },
+        { q: '求電纜中損耗的功率。', answer: 'P<sub>損耗</sub> = I²R = 500² × 4.0 = 1.0 × 10⁶ W（1.0 MW，約 1.5 %）。', points: ['I²R [1M]', '1.0 × 10⁶ W [1A]'] },
+        { q: '解釋為甚麼不可能以 11 kV 經這些電纜輸送相同的功率。', answer: '在 11 kV 下電流將是 66 × 10⁶ / 11 × 10³ = 6000 A，損耗為 6000² × 4.0 = 1.44 × 10⁸ W — 比輸送的 66 MW 還多。電纜兩端的電壓降（6000 × 4.0 = 24 kV）亦會超過電源電壓。', points: ['電流會是 6000 A [1]', '損耗（144 MW）會超過輸送的功率 [1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE07', topic: 'elec', level: 3, sub: 'Alternating current',
+    stem: 'The mains supply is sinusoidal with a peak voltage of 311 V and a frequency of 50 Hz. A lamp rated "220 V, 100 W" is connected to it.',
+    parts: [
+      { label: '(a)', marks: 1, q: 'Find the r.m.s. voltage of the supply.', answer: 'V<sub>rms</sub> = 311 / √2 = 220 V.', points: ['220 V [1]'], num: { v: 219.9, unit: 'V' } },
+      { label: '(b)', marks: 1, q: 'Find the period of the supply.', answer: 'T = 1 / f = 1 / 50 = 0.020 s.', points: ['0.020 s [1]'], num: { v: 0.020, unit: 's' } },
+      { label: '(c)', marks: 2, q: 'Find the r.m.s. current in the lamp.', answer: 'I<sub>rms</sub> = P / V<sub>rms</sub> = 100 / 220 = 0.455 A.', points: ['I = P / V using r.m.s. values [1M]', '0.455 A [1A]'], num: { v: 0.4545, unit: 'A' } },
+      { label: '(d)', marks: 1, q: 'Find the peak current.', answer: 'I₀ = √2 × 0.455 = 0.643 A.', points: ['0.643 A [1]'], num: { v: 0.643, unit: 'A' } },
+      { label: '(e)', marks: 1, q: 'The current falls to zero 100 times a second. Why does the lamp not appear to flicker?', answer: 'The filament stays hot (it cannot cool down in such a short time), and the eye cannot follow changes this fast.', points: ['Filament stays hot / changes too fast for the eye [1]'] }
+    ],
+    zh: {
+      sub: '交流電',
+      stem: '市電是峰值電壓為 311 V、頻率為 50 Hz 的正弦交流電。一盞額定值為「220 V, 100 W」的燈連接到市電。',
+      parts: [
+        { q: '求電源的方均根電壓。', answer: 'V<sub>rms</sub> = 311 / √2 = 220 V。', points: ['220 V [1]'] },
+        { q: '求電源的週期。', answer: 'T = 1 / f = 1 / 50 = 0.020 s。', points: ['0.020 s [1]'] },
+        { q: '求燈的方均根電流。', answer: 'I<sub>rms</sub> = P / V<sub>rms</sub> = 100 / 220 = 0.455 A。', points: ['用方均根值計算 I = P / V [1M]', '0.455 A [1A]'] },
+        { q: '求峰值電流。', answer: 'I₀ = √2 × 0.455 = 0.643 A。', points: ['0.643 A [1]'] },
+        { q: '電流每秒降至零 100 次。為甚麼燈看來沒有閃爍？', answer: '燈絲保持灼熱（在這麼短的時間內來不及冷卻），而且眼睛跟不上這麼快的變化。', points: ['燈絲保持灼熱／變化太快，眼睛跟不上 [1]'] }
+      ]
+    }
+  },
+  {
+    id: 'SE08', topic: 'elec', level: 5, sub: 'Magnetic field of a current',
+    stem: 'A long solenoid 0.40 m long has 800 turns and carries a current of 2.5 A. A Hall probe is used to measure the field inside it. (μ₀ = 4π × 10⁻⁷ H m⁻¹)',
+    parts: [
+      { label: '(a)', marks: 2, q: 'Calculate the magnetic field strength near the centre of the solenoid.', answer: 'B = μ₀NI / l = 4π × 10⁻⁷ × 800 × 2.5 / 0.40 = 6.28 × 10⁻³ T.', points: ['B = μ₀NI / l [1M]', '6.28 × 10⁻³ T [1A]'], num: { v: 6.283e-3, unit: 'T' } },
+      { label: '(b)', marks: 2, q: 'Why is the slice in a Hall probe usually made of a semiconductor rather than a metal?', answer: 'V<sub>H</sub> = BI / (nQt). A semiconductor has far fewer charge carriers per unit volume (smaller n), so for the same current the carriers drift faster and the Hall voltage is much larger and easier to measure.', points: ['Fewer charge carriers per unit volume (smaller n) [1]', 'so a larger, measurable Hall voltage [1]'] },
+      { label: '(c)', marks: 1, q: 'What is the Hall voltage if the probe is turned so that the field is parallel to the face of the slice?', answer: 'Zero: there is no field component perpendicular to the slice, so no sideways magnetic force on the carriers.', points: ['Zero [1]'] },
+      { label: '(d)', marks: 1, q: 'How does the field at one end of the solenoid compare with the field at the centre?', answer: 'It is about half the field at the centre.', points: ['About half [1]'] }
+    ],
+    zh: {
+      sub: '電流的磁場',
+      stem: '一個長 0.40 m 的長螺線管有 800 匝，載有 2.5 A 的電流。用霍爾探測器量度管內的磁場。（μ₀ = 4π × 10⁻⁷ H m⁻¹）',
+      parts: [
+        { q: '計算螺線管中央附近的磁場強度。', answer: 'B = μ₀NI / l = 4π × 10⁻⁷ × 800 × 2.5 / 0.40 = 6.28 × 10⁻³ T。', points: ['B = μ₀NI / l [1M]', '6.28 × 10⁻³ T [1A]'] },
+        { q: '為甚麼霍爾探測器的薄片通常用半導體而不是金屬製成？', answer: 'V<sub>H</sub> = BI / (nQt)。半導體每單位體積的載流子少得多（n 較小），同一電流下載流子漂移得較快，霍爾電壓大得多，較容易量度。', points: ['每單位體積載流子較少（n 較小）[1]', '霍爾電壓較大、可量度 [1]'] },
+        { q: '若把探測器轉動，使磁場與薄片表面平行，霍爾電壓是多少？', answer: '零：沒有垂直於薄片的磁場分量，載流子不受側向磁力。', points: ['零 [1]'] },
+        { q: '螺線管一端的磁場與中央的磁場相比如何？', answer: '約為中央磁場的一半。', points: ['約一半 [1]'] }
+      ]
+    }
+  }
+]);

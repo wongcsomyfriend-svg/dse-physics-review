@@ -21,6 +21,82 @@
     });
   };
 
+  /*
+   * Structured (Paper 1 Section B style) questions live in their own list.
+   *   { id, topic, level, sub, stem, figure?, parts: [part, ...], zh: { sub, stem, parts: [{ q, answer, points }] } }
+   *   part = { q, marks, answer, points: [one marking point per mark], num?: { v, unit, tol } }
+   * `num` lets the app check a numerical final answer typed by the student (relative tolerance tol, default 2 %).
+   */
+  window.STRUCTURED = window.STRUCTURED || [];
+  const SZ = window.STRUCTURED_ZH = window.STRUCTURED_ZH || {};
+  window.addStructured = function (list) {
+    list.forEach(q => {
+      if (q.zh) { SZ[q.id] = q.zh; delete q.zh; }
+      window.STRUCTURED.push(q);
+    });
+  };
+
+  /*
+   * Draw a graph as an inline SVG string, using currentColor so it suits light and dark themes.
+   *   x, y:    { min = 0, max, label, ticks: [[value, 'text'], ...] }
+   *   lines:   [{ pts: [[x, y], ...] } or { f: x => y, from, to, n }, plus dash: true / w: width]
+   *   guides:  [[x1, y1, x2, y2], ...]  thin dashed construction lines
+   *   dots:    [[x, y, 'label', dx, dy], ...]
+   *   text:    [[x, y, 'text', 'start' | 'middle' | 'end'], ...]
+   */
+  window.svgGraph = function (o) {
+    const w = o.w || 400, h = o.h || 220;
+    const L = 52, Rr = w - 56, Tp = 22, B = h - 30;
+    const xs = Object.assign({ min: 0 }, o.x), ys = Object.assign({ min: 0 }, o.y);
+    const X = x => L + (x - xs.min) / (xs.max - xs.min) * (Rr - L);
+    const Y = y => B - (y - ys.min) / (ys.max - ys.min) * (B - Tp);
+    const r = n => Math.round(n * 10) / 10;
+    const ax = ys.min < 0 ? Y(0) : B;
+    const path = pts => 'M' + pts.map(([x, y]) => r(X(x)) + ' ' + r(Y(y))).join(' L');
+    let s = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${o.aria || 'graph'}"><g fill="none" stroke="currentColor" stroke-width="2">`;
+    s += `<path d="M${L} ${B} V${Tp - 6} M${L} ${r(ax)} H${Rr + 6}"/>`;
+    (o.lines || []).forEach(l => {
+      let pts = l.pts;
+      if (l.f) { pts = []; const n = l.n || 40; for (let i = 0; i <= n; i++) { const x = l.from + (l.to - l.from) * i / n; pts.push([x, l.f(x)]); } }
+      s += `<path d="${path(pts)}" stroke-width="${l.w || 2.5}"${l.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
+    });
+    s += '</g>';
+    if (o.guides) s += `<g fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"><path d="${o.guides.map(([a, b, c, d]) => `M${r(X(a))} ${r(Y(b))} L${r(X(c))} ${r(Y(d))}`).join(' ')}"/></g>`;
+    s += '<g fill="currentColor">' + (o.dots || []).map(([x, y]) => `<circle cx="${r(X(x))}" cy="${r(Y(y))}" r="3.5"/>`).join('') + '</g>';
+    s += '<g fill="currentColor" font-size="13" font-family="inherit" text-anchor="middle">';
+    (xs.ticks || []).forEach(([v, t]) => { s += `<text x="${r(X(v))}" y="${r(ax + 16)}">${t}</text>`; });
+    (ys.ticks || []).forEach(([v, t]) => { s += `<text x="${L - 7}" y="${r(Y(v) + 4)}" text-anchor="end">${t}</text>`; });
+    if (ys.label) s += `<text x="${L + 8}" y="${Tp - 8}" text-anchor="start">${ys.label}</text>`;
+    if (xs.label) s += `<text x="${Rr + 9}" y="${r(ax + 4)}" text-anchor="start">${xs.label}</text>`;
+    (o.dots || []).forEach(([x, y, t, dx, dy]) => { if (t) s += `<text x="${r(X(x) + (dx || 0))}" y="${r(Y(y) + (dy == null ? -9 : dy))}">${t}</text>`; });
+    (o.text || []).forEach(([x, y, t, a]) => { s += `<text x="${r(X(x))}" y="${r(Y(y))}"${a ? ` text-anchor="${a}"` : ''}>${t}</text>`; });
+    return s + '</g></svg>';
+  };
+
+  /*
+   * Four small sketch graphs labelled A–D, for "which graph shows…" questions.
+   *   panels: [{ f: x => y } or { pts: [[x, y], ...] }, ...] with x and y running from 0 to 1
+   *           (y from −1 to 1 when o.mid is true, so the x-axis is drawn across the middle)
+   *   o: { x: 'x-axis label', y: 'y-axis label', mid: false, aria }
+   */
+  window.svgPanels = function (panels, o) {
+    const r = n => Math.round(n * 10) / 10;
+    let s = `<svg viewBox="0 0 420 140" role="img" aria-label="${o.aria || 'four sketch graphs labelled A to D'}"><g fill="none" stroke="currentColor" stroke-width="1.6">`;
+    const txt = [];
+    panels.forEach((p, i) => {
+      const x0 = 22 + i * 102, y0 = o.mid ? 62 : 104, w = 74, h = o.mid ? 40 : 80;
+      const X = x => x0 + x * w, Y = y => y0 - y * h;
+      s += `<path d="M${x0} ${o.mid ? 18 : 18} V${o.mid ? 106 : y0} M${x0} ${y0} H${x0 + w + 6}"/>`;
+      let pts = p.pts;
+      if (p.f) { pts = []; for (let k = 0; k <= 30; k++) { const x = k / 30; pts.push([x, p.f(x)]); } }
+      s += `<path d="M${pts.map(([x, y]) => r(X(x)) + ' ' + r(Y(y))).join(' L')}" stroke-width="2.2"${p.dash ? ' stroke-dasharray="5 3"' : ''}/>`;
+      txt.push(`<text x="${x0 + 38}" y="130" font-weight="700">${'ABCD'[i]}</text>`);
+      if (o.y) txt.push(`<text x="${x0 + 4}" y="14" text-anchor="start" font-size="11">${o.y}</text>`);
+      if (o.x) txt.push(`<text x="${x0 + w + 8}" y="${y0 + 4}" text-anchor="start" font-size="11">${o.x}</text>`);
+    });
+    return s + `</g><g fill="currentColor" font-size="13" font-family="inherit" text-anchor="middle">${txt.join('')}</g></svg>`;
+  };
+
   /* ---------- number formatting ---------- */
   const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
   const sup = n => String(n).split('').map(c => SUP[c]).join('');
