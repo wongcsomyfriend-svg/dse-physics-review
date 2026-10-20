@@ -97,6 +97,29 @@
     return s + `</g><g fill="currentColor" font-size="13" font-family="inherit" text-anchor="middle">${txt.join('')}</g></svg>`;
   };
 
+  /*
+   * Small helpers for hand-drawn figures, shared by the bank files. All draw in currentColor.
+   *   svg(w, h, aria, body)        line(d, width, dashed)        arrow(x1, y1, x2, y2, width)
+   *   text(x, y, t, { size, anchor, bold })   dot(x, y, r)   circ(x, y, r, width)   box(x, y, w, h, width)
+   */
+  const r1 = n => Math.round(n * 10) / 10;
+  window.draw = {
+    r1,
+    range: (a, b, n) => Array.from({ length: n + 1 }, (_, i) => a + (b - a) * i / n),
+    svg: (w, h, aria, body) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${aria}">${body}</svg>`,
+    line: (d, w, dash) => `<path d="${d}" fill="none" stroke="currentColor" stroke-width="${w || 2}"${dash ? ' stroke-dasharray="5 4"' : ''}/>`,
+    arrow: (x1, y1, x2, y2, w) => {
+      const a = Math.atan2(y2 - y1, x2 - x1), h = 9;
+      const p = s => r1(x2 - h * Math.cos(a + s)) + ' ' + r1(y2 - h * Math.sin(a + s));
+      return `<path d="M${r1(x1)} ${r1(y1)} L${r1(x2)} ${r1(y2)}" fill="none" stroke="currentColor" stroke-width="${w || 2}"/>` +
+        `<path d="M${r1(x2)} ${r1(y2)} L${p(0.4)} L${p(-0.4)} Z" fill="currentColor"/>`;
+    },
+    text: (x, y, t, o) => `<text x="${r1(x)}" y="${r1(y)}" fill="currentColor" font-size="${(o && o.size) || 14}" font-family="inherit" text-anchor="${(o && o.anchor) || 'middle'}"${o && o.bold ? ' font-weight="700"' : ''}>${t}</text>`,
+    dot: (x, y, rad) => `<circle cx="${r1(x)}" cy="${r1(y)}" r="${rad || 3.5}" fill="currentColor"/>`,
+    circ: (x, y, rad, w) => `<circle cx="${r1(x)}" cy="${r1(y)}" r="${rad}" fill="none" stroke="currentColor" stroke-width="${w || 2}"/>`,
+    box: (x, y, w, h, wd) => `<rect x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}" fill="none" stroke="currentColor" stroke-width="${wd || 2}"/>`
+  };
+
   /* ---------- number formatting ---------- */
   const SUP = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
   const sup = n => String(n).split('').map(c => SUP[c]).join('');
@@ -153,10 +176,15 @@
       const pick = pickOptions(b.answer, b.wrong, (i + offset) % 4, f);
       const id = spec.family + '-' + String(i + 1).padStart(2, '0');
       const options = pick.values.map(v => prefix + v + unit);
-      window.QUESTIONS.push({
+      const q = {
         id, topic: spec.topic, level: b.level || spec.level, family: spec.family,
         sub: spec.sub[0], stem: b.stem[0], options, answer: pick.answer, explain: b.explain[0]
-      });
+      };
+      // A figure can come from the build result, the spec, or the TFIG table in bank/tfig.js.
+      const figFn = spec.figure || (window.TFIG && window.TFIG[spec.family]);
+      const fig = b.figure || (figFn && figFn(p, b));
+      if (fig) q.figure = fig;
+      window.QUESTIONS.push(q);
       QZ[id] = { sub: spec.sub[1], stem: b.stem[1], explain: b.explain[1] };
       if (b.unitZh) QZ[id].options = pick.values.map(v => prefix + v + b.unitZh);
       if (window.__CAPTURE_PARAMS) window.__CAPTURE_PARAMS[id] = { family: spec.family, p, answer: b.answer };

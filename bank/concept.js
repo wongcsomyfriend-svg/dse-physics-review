@@ -4,19 +4,7 @@
  */
 (function () {
   'use strict';
-  const range = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => a + (b - a) * i / n);
-  const r1 = n => Math.round(n * 10) / 10;
-  // Small drawing helpers for hand-made figures.
-  const svg = (w, h, aria, body) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${aria}">${body}</svg>`;
-  const line = (d, w, dash) => `<path d="${d}" fill="none" stroke="currentColor" stroke-width="${w || 2}"${dash ? ' stroke-dasharray="5 4"' : ''}/>`;
-  const arrow = (x1, y1, x2, y2, w) => {
-    const a = Math.atan2(y2 - y1, x2 - x1), h = 9;
-    const p = s => r1(x2 - h * Math.cos(a + s)) + ' ' + r1(y2 - h * Math.sin(a + s));
-    return line(`M${r1(x1)} ${r1(y1)} L${r1(x2)} ${r1(y2)}`, w) + `<path d="M${r1(x2)} ${r1(y2)} L${p(0.4)} L${p(-0.4)} Z" fill="currentColor"/>`;
-  };
-  const text = (x, y, t, o) => `<text x="${r1(x)}" y="${r1(y)}" fill="currentColor" font-size="${(o && o.size) || 14}" font-family="inherit" text-anchor="${(o && o.anchor) || 'middle'}"${o && o.bold ? ' font-weight="700"' : ''}>${t}</text>`;
-  const dot = (x, y, rad) => `<circle cx="${r1(x)}" cy="${r1(y)}" r="${rad || 3.5}" fill="currentColor"/>`;
-  const circ = (x, y, rad, w) => `<circle cx="${r1(x)}" cy="${r1(y)}" r="${rad}" fill="none" stroke="currentColor" stroke-width="${w || 2}"/>`;
+  const { range, r1, svg, line, arrow, text, dot, circ } = window.draw;
   const sines = (a, n) => ({ f: x => a * Math.sin(2 * Math.PI * n * x) });
 
   /* ================= Heat and Gases (H105–H120) ================= */
