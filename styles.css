@@ -213,3 +213,18 @@ th { color: var(--muted); font-weight: 500; font-size: .85rem; }
 }
 .dtable { width: auto; margin: 8px 0; font-size: .92rem; }
 .dtable th, .dtable td { padding: 4px 10px; text-align: center; border: 1px solid var(--line); }
+
+/* Drawing on diagrams in structured questions */
+.drawpad { margin: 10px 0; }
+.drawtools { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.btn.small.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.drawsvg { width: 100%; max-width: 480px; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--card); color: var(--ink); touch-action: none; cursor: crosshair; user-select: none; }
+.drawsvg.locked { cursor: default; }
+.drawsvg .mine { color: var(--accent); }
+.drawsvg .modeldraw { color: var(--ok); }
+.drawhint, .drawkey { font-size: .85rem; margin-top: 4px; }
+.drawkey .k { display: inline-block; width: 22px; height: 3px; vertical-align: middle; margin: 0 6px 0 12px; border-radius: 2px; }
+.drawkey .k:first-child { margin-left: 0; }
+.drawkey .k.mine { background: var(--accent); }
+.drawkey .k.model { background: var(--ok); }

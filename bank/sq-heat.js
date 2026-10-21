@@ -429,3 +429,111 @@ addStructured([
     }
   }
 ]);
+
+/* Batch 2: questions with figures and drawing parts (see drawHTML in app.js). */
+(function () {
+  const { svg, line, box, circ, text } = window.draw;
+  const heat = graphFrame({
+    aria: 'Axes for temperature against time with the original heating curve dashed', w: 400, h: 240,
+    x: { max: 32, label: 't / min', ticks: [5, 10, 15, 20, 25, 30].map(v => [v, String(v)]) },
+    y: { max: 120, label: 'θ / °C', ticks: [20, 40, 60, 80, 100].map(v => [v, String(v)]) },
+    grid: { x: [5, 10, 15, 20, 25, 30], y: [20, 40, 60, 80, 100] },
+    lines: [{ pts: [[0, 20], [2, 80], [12, 80], [14, 100]], dash: true, w: 1.5 }]
+  });
+  const boyle = graphFrame({
+    aria: 'Empty axes for pressure against 1/V', w: 400, h: 240,
+    x: { max: 0.062, label: '1/V / cm⁻³', ticks: [0.01, 0.02, 0.03, 0.04, 0.05, 0.06].map(v => [v, String(v)]) },
+    y: { max: 300, label: 'p / kPa', ticks: [50, 100, 150, 200, 250, 300].map(v => [v, String(v)]) },
+    grid: { x: [0.01, 0.02, 0.03, 0.04, 0.05, 0.06], y: [50, 100, 150, 200, 250, 300] }
+  });
+  const plotted = [[0.05, 250], [0.04, 200], [0.025, 125], [0.02, 100]];
+  addStructured([
+    {
+      id: 'SH09', topic: 'heat', level: 4, sub: 'Heating curve',
+      stem: 'A 100 W heater is used to heat 0.20 kg of a solid in an insulated container. The graph shows how the temperature θ of the substance varies with time t. Assume all the energy from the heater is absorbed by the substance.',
+      figure: svgGraph({
+        aria: 'Temperature against time: rises from 20 to 80 degrees in 2 minutes, constant at 80 degrees until 12 minutes, then rises to 100 degrees at 14 minutes',
+        x: { max: 16, label: 't / min', ticks: [[2, '2'], [12, '12'], [14, '14']] }, y: { max: 115, label: 'θ / °C', ticks: [[20, '20'], [80, '80'], [100, '100']] },
+        lines: [{ pts: [[0, 20], [2, 80], [12, 80], [14, 100]] }], guides: [[2, 0, 2, 80], [12, 0, 12, 80], [14, 0, 14, 100], [0, 100, 14, 100]]
+      }),
+      parts: [
+        { label: '(a)', marks: 1, q: 'What is the melting point of the substance?', answer: '80 °C (the temperature of the flat part of the graph).', points: ['80 °C [1]'] },
+        {
+          label: '(b)', marks: 2, q: 'Explain why the temperature stays constant between t = 2 min and t = 12 min although the heater is still on.',
+          answer: 'The substance is melting. The energy supplied is used to overcome the attractions between the molecules (increasing their potential energy), not to increase their kinetic energy, so the temperature does not rise.',
+          points: ['The substance is melting / changing state [1]', 'Energy increases the potential energy of the molecules, not their kinetic energy [1]']
+        },
+        {
+          label: '(c)', marks: 2, q: 'Find the specific heat capacity of the substance in the solid state.',
+          answer: 'In 2 min = 120 s the solid warms from 20 °C to 80 °C.<br>c = Pt / (mΔθ) = 100 × 120 / (0.20 × 60) = 1000 J kg⁻¹ °C⁻¹.',
+          points: ['c = Pt / (mΔθ) with t = 120 s and Δθ = 60 °C [1M]', '1000 J kg⁻¹ °C⁻¹ [1A]'], num: { v: 1000, unit: 'J kg⁻¹ °C⁻¹' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Find the specific latent heat of fusion of the substance.',
+          answer: 'Melting takes 12 − 2 = 10 min = 600 s.<br>ℓ = Pt / m = 100 × 600 / 0.20 = 3.0 × 10⁵ J kg⁻¹.',
+          points: ['ℓ = Pt / m with t = 600 s [1M]', '3.0 × 10⁵ J kg⁻¹ [1A]'], num: { v: 3.0e5, unit: 'J kg⁻¹' }
+        },
+        {
+          label: '(e)', marks: 2, q: 'The experiment is repeated with 0.40 kg of the same solid and the same heater. On the axes, sketch the graph you would expect. (The original graph is dashed.)',
+          answer: 'With twice the mass, every stage takes twice as long: the solid reaches 80 °C at 4 min, melting lasts 20 min (until 24 min), and the liquid reaches 100 °C at 28 min.',
+          points: ['Reaches 80 °C at 4 min (half the original gradient) [1]', 'Flat part at 80 °C lasting 20 min, until 24 min [1]'],
+          draw: {
+            w: heat.w, h: heat.h, base: heat.base, tools: ['line', 'pen'], aria: 'Axes for sketching the new heating curve',
+            snap: [[0, 20], [4, 80], [24, 80], [28, 100]].map(([x, y]) => [heat.X(x), heat.Y(y)]),
+            answer: heat.path([[0, 20], [4, 80], [24, 80], [28, 100]])
+          }
+        }
+      ],
+      zh: {
+        sub: '加熱曲線',
+        stem: '用一個 100 W 的電熱器加熱放在隔熱容器內 0.20 kg 的固體。下圖顯示物質的溫度 θ 隨時間 t 的變化。假設電熱器的能量全部被物質吸收。',
+        parts: [
+          { q: '該物質的熔點是多少？', answer: '80 °C（線圖平坦部分的溫度）。', points: ['80 °C [1]'] },
+          { q: '解釋為甚麼電熱器仍然開着，溫度卻在 t = 2 min 至 t = 12 min 期間保持不變。', answer: '物質正在熔化。所供應的能量用來克服分子之間的吸引力（增加分子的勢能），而不是增加分子的動能，所以溫度不上升。', points: ['物質正在熔化／改變物態 [1]', '能量增加分子的勢能，而非動能 [1]'] },
+          { q: '求該物質在固態時的比熱容量。', answer: '在 2 min = 120 s 內，固體由 20 °C 升至 80 °C。<br>c = Pt / (mΔθ) = 100 × 120 / (0.20 × 60) = 1000 J kg⁻¹ °C⁻¹。', points: ['c = Pt / (mΔθ)，其中 t = 120 s、Δθ = 60 °C [1M]', '1000 J kg⁻¹ °C⁻¹ [1A]'] },
+          { q: '求該物質的熔解比潛熱。', answer: '熔化需時 12 − 2 = 10 min = 600 s。<br>ℓ = Pt / m = 100 × 600 / 0.20 = 3.0 × 10⁵ J kg⁻¹。', points: ['ℓ = Pt / m，其中 t = 600 s [1M]', '3.0 × 10⁵ J kg⁻¹ [1A]'] },
+          { q: '用 0.40 kg 的同一種固體和同一個電熱器重做實驗。在坐標軸上繪畫你預期的線圖。（原來的線圖以虛線表示。）', answer: '質量加倍，每個階段所需時間都加倍：固體在 4 min 時達到 80 °C，熔化持續 20 min（直至 24 min），液體在 28 min 時達到 100 °C。', points: ['在 4 min 時達到 80 °C（斜率為原來的一半）[1]', '在 80 °C 的平坦部分持續 20 min，直至 24 min [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SH10', topic: 'heat', level: 4, sub: "Boyle's law",
+      stem: 'A student traps some air in a syringe connected to a pressure gauge. The air is compressed slowly so that its temperature stays at 27 °C. The readings are:<br><table class="dtable"><tr><th>V / cm³</th><td>20</td><td>25</td><td>40</td><td>50</td></tr><tr><th>p / kPa</th><td>250</td><td>200</td><td>125</td><td>100</td></tr></table>(R = 8.31 J mol⁻¹ K⁻¹)',
+      figure: svg(380, 190, 'A syringe of air connected to a pressure gauge',
+        box(120, 40, 50, 130) + '<rect x="120" y="90" width="50" height="80" fill="currentColor" fill-opacity="0.1"/>' + line('M120 90 H170', 5) + line('M145 90 V20 M130 20 H160', 3) +
+        line('M145 170 V180 H250 V150', 1.5) + circ(250, 135, 15) + line('M250 135 L259 127', 2) + text(250, 112, 'kPa', { size: 11 })),
+      parts: [
+        { label: '(a)', marks: 1, q: 'Calculate 1/V for each reading.', answer: '1/V = 0.050, 0.040, 0.025 and 0.020 cm⁻³.', points: ['All four values correct [1]'] },
+        {
+          label: '(b)', marks: 2, q: 'On the axes, plot p against 1/V and draw the best-fit line.',
+          answer: 'The four points (0.050, 250), (0.040, 200), (0.025, 125) and (0.020, 100) lie on a straight line through the origin.',
+          points: ['All four points plotted correctly [1]', 'Straight best-fit line through the origin [1]'],
+          draw: {
+            w: boyle.w, h: boyle.h, base: boyle.base, tools: ['line', 'pen'], aria: 'Axes for plotting p against 1/V',
+            answer: plotted.map(([x, y]) => `<path d="M${boyle.X(x) - 5} ${boyle.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`).join('') + boyle.path([[0, 0], [0.06, 300]])
+          }
+        },
+        {
+          label: '(c)', marks: 1, q: 'What does the graph show about the pressure and volume of the air?',
+          answer: "A straight line through the origin shows that p ∝ 1/V: at constant temperature the pressure is inversely proportional to the volume (Boyle's law).",
+          points: ['p is inversely proportional to V (p ∝ 1/V) [1]']
+        },
+        {
+          label: '(d)', marks: 2, q: 'Use the gradient of the graph to find the number of moles of air in the syringe.',
+          answer: 'Gradient = pV = 250 kPa ÷ 0.050 cm⁻³ = 5000 kPa cm³ = 5.0 × 10³ × 10³ Pa × 10⁻⁶ m³ = 5.0 J.<br>n = pV / (RT) = 5.0 / (8.31 × 300) = 2.0 × 10⁻³ mol.',
+          points: ['pV = 5.0 J (gradient, in SI units) [1M]', '2.0 × 10⁻³ mol [1A]'], num: { v: 2.006e-3, unit: 'mol', tol: 0.03 }
+        }
+      ],
+      zh: {
+        sub: '波義耳定律',
+        stem: '一名學生把一些空氣困在連接壓強計的注射器內，慢慢壓縮空氣，使其溫度保持在 27 °C。讀數如下：<br><table class="dtable"><tr><th>V / cm³</th><td>20</td><td>25</td><td>40</td><td>50</td></tr><tr><th>p / kPa</th><td>250</td><td>200</td><td>125</td><td>100</td></tr></table>（R = 8.31 J mol⁻¹ K⁻¹）',
+        parts: [
+          { q: '計算每個讀數的 1/V。', answer: '1/V = 0.050、0.040、0.025 和 0.020 cm⁻³。', points: ['四個數值都正確 [1]'] },
+          { q: '在坐標軸上描繪 p 對 1/V 的關係，並畫出最佳擬合線。', answer: '(0.050, 250)、(0.040, 200)、(0.025, 125) 和 (0.020, 100) 四點都在一條通過原點的直線上。', points: ['四點都描繪正確 [1]', '通過原點的最佳擬合直線 [1]'] },
+          { q: '線圖顯示空氣的壓強和體積有甚麼關係？', answer: '通過原點的直線顯示 p ∝ 1/V：在溫度不變時，壓強與體積成反比（波義耳定律）。', points: ['p 與 V 成反比（p ∝ 1/V）[1]'] },
+          { q: '利用線圖的斜率，求注射器內空氣的摩爾數。', answer: '斜率 = pV = 250 kPa ÷ 0.050 cm⁻³ = 5000 kPa cm³ = 5.0 × 10³ × 10³ Pa × 10⁻⁶ m³ = 5.0 J。<br>n = pV / (RT) = 5.0 / (8.31 × 300) = 2.0 × 10⁻³ mol。', points: ['pV = 5.0 J（斜率，用國際單位）[1M]', '2.0 × 10⁻³ mol [1A]'] }
+        ]
+      }
+    }
+  ]);
+})();

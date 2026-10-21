@@ -157,16 +157,83 @@
   function locSQ(q) {
     if (lang !== 'zh') return q;
     const z = SZQ[q.id] || {};
-    let fig = q.figure;
-    if (fig) for (const [a, b] of Object.entries(I18N.figure.zh)) fig = fig.split(a).join(b);
+    const swap = str => { if (str) for (const [a, b] of Object.entries(I18N.figure.zh)) str = str.split(a).join(b); return str; };
     return Object.assign({}, q, {
-      sub: z.sub || q.sub, stem: z.stem || q.stem, figure: fig,
-      parts: q.parts.map((p, i) => Object.assign({}, p, (z.parts || [])[i] || {}))
+      sub: z.sub || q.sub, stem: z.stem || q.stem, figure: swap(q.figure),
+      parts: q.parts.map((p, i) => Object.assign({}, p, (z.parts || [])[i] || {},
+        p.draw ? { draw: Object.assign({}, p.draw, { base: swap(p.draw.base), answer: swap(p.draw.answer) }) } : {}))
     });
   }
   const sqMax = q => q.parts.reduce((t, p) => t + p.marks, 0);
   const sqGot = st => (st.ticks || []).reduce((t, a) => t + (a || []).filter(Boolean).length, 0);
-  const newSQState = () => ({ texts: [], ticks: [], revealed: false });
+  const newSQState = () => ({ texts: [], ticks: [], revealed: false, draws: [], tools: [] });
+
+  /* ---------- drawing on diagrams ----------
+   * A part with draw: { w, h, base, answer, tools?, snap?, aria? } shows an SVG the student can draw on.
+   * base and answer are SVG markup in a w × h viewBox; answer (the model drawing) is overlaid after
+   * the marking scheme is shown, for the student to compare. Strokes are kept in st.draws[part].
+   */
+  const DRAW_TOOLS = { line: 'Line', ray: 'Ray', arrow: 'Arrow', pen: 'Freehand' };
+  const rr = n => Math.round(n * 10) / 10;
+  function strokeSVG(k) {
+    const p = k.pts;
+    if (k.t === 'pen') return `<path d="M${p.map(q => q.join(' ')).join(' L')}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (p.length < 2) return '';
+    let out = `<path d="M${p[0].join(' ')} L${p[1].join(' ')}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>`;
+    if (k.t === 'arrow') {
+      const a = Math.atan2(p[1][1] - p[0][1], p[1][0] - p[0][0]), h = 11;
+      const e = s => rr(p[1][0] - h * Math.cos(a + s)) + ' ' + rr(p[1][1] - h * Math.sin(a + s));
+      out += `<path d="M${p[1].join(' ')} L${e(0.4)} L${e(-0.4)} Z" fill="currentColor"/>`;
+    }
+    return out;
+  }
+  function drawHTML(p, i, st, readonly) {
+    const d = p.draw, tools = d.tools || Object.keys(DRAW_TOOLS), cur = (st.tools && st.tools[i]) || tools[0];
+    const strokes = ((st.draws || [])[i] || []).map(strokeSVG).join('');
+    const bar = readonly || st.revealed ? '' : `<div class="drawtools">${tools.map(t =>
+      `<button type="button" class="btn small${t === cur ? ' on' : ''}" data-tool="${i}:${t}">${T(DRAW_TOOLS[t])}</button>`).join('')}
+      <button type="button" class="btn small" data-undo="${i}">${T('Undo')}</button><button type="button" class="btn small" data-clear="${i}">${T('Clear')}</button></div>`;
+    const note = st.revealed
+      ? `<div class="drawkey"><span class="k mine"></span>${T('Your drawing')}<span class="k model"></span>${T('Model answer')}</div>`
+      : (readonly ? '' : `<div class="muted drawhint">${T('Draw on the diagram: choose a tool, then drag.')}</div>`);
+    return `<div class="drawpad">${bar}<svg class="drawsvg${readonly || st.revealed ? ' locked' : ''}" data-draw="${i}" viewBox="0 0 ${d.w} ${d.h}" role="img" aria-label="${esc(d.aria || '')}">${d.base}<g class="modeldraw">${st.revealed ? d.answer : ''}</g><g class="mine">${strokes}</g></svg>${note}</div>`;
+  }
+  // Make one drawing area interactive. Line ends snap to the part's snap points; a ray runs on to the edge.
+  function bindDraw(svgEl, d, st, i) {
+    const g = svgEl.querySelector('g.mine');
+    const list = () => (st.draws[i] || (st.draws[i] = []));
+    const redraw = cur => { g.innerHTML = list().map(strokeSVG).join('') + (cur ? strokeSVG(cur) : ''); };
+    const at = e => {
+      const P = new DOMPoint(e.clientX, e.clientY).matrixTransform(svgEl.getScreenCTM().inverse());
+      for (const sp of d.snap || []) if (Math.hypot(sp[0] - P.x, sp[1] - P.y) < 9) return [sp[0], sp[1]];
+      return [rr(P.x), rr(P.y)];
+    };
+    const toEdge = (a, b) => {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      let t = Infinity;
+      if (dx > 0) t = Math.min(t, (d.w - a[0]) / dx); if (dx < 0) t = Math.min(t, -a[0] / dx);
+      if (dy > 0) t = Math.min(t, (d.h - a[1]) / dy); if (dy < 0) t = Math.min(t, -a[1] / dy);
+      return isFinite(t) ? [rr(a[0] + dx * t), rr(a[1] + dy * t)] : b;
+    };
+    let cur = null;
+    svgEl.onpointerdown = e => {
+      e.preventDefault(); svgEl.setPointerCapture(e.pointerId);
+      cur = { t: (st.tools && st.tools[i]) || (d.tools || Object.keys(DRAW_TOOLS))[0], pts: [at(e)] };
+    };
+    svgEl.onpointermove = e => {
+      if (!cur) return;
+      const P = at(e);
+      if (cur.t === 'pen') { const L = cur.pts[cur.pts.length - 1]; if (Math.hypot(P[0] - L[0], P[1] - L[1]) > 2) cur.pts.push(P); }
+      else cur.pts[1] = cur.t === 'ray' ? toEdge(cur.pts[0], P) : P;
+      redraw(cur);
+    };
+    svgEl.onpointerup = svgEl.onpointercancel = () => {
+      if (!cur) return;
+      const p = cur.pts, far = p.length > 1 && Math.hypot(p[p.length - 1][0] - p[0][0], p[p.length - 1][1] - p[0][1]) > 4;
+      if (far) list().push(cur);
+      cur = null; redraw();
+    };
+  }
   // Read the last number a student typed, e.g. "2.4e5", "2.4 x 10^5", "2.4 × 10⁵" or "240000".
   function parseNum(text) {
     const sup = { '⁻': '-', '⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9 };
@@ -201,7 +268,7 @@
             `<label class="pt"><input type="checkbox" data-tick="${i}.${j}" ${ticks[j] ? 'checked' : ''} ${o.readonly ? 'disabled' : ''}><span>${pt}</span></label>`).join('')}</div>
           <div class="muted partscore">${T('{a} / {b} marks', { a: ticks.filter(Boolean).length, b: p.marks })}</div></div>` : '';
       return `<div class="part"><div class="partq"><b>${p.label}</b><span>${p.q}</span><span class="marks">(${markWord(p.marks)})</span></div>
-        <textarea data-part="${i}" rows="3" placeholder="${esc(T('Write your answer and working here'))}" ${o.readonly ? 'readonly' : ''}>${esc(st.texts[i] || '')}</textarea>${scheme}</div>`;
+        ${p.draw ? drawHTML(p, i, st, o.readonly) : ''}<textarea data-part="${i}" rows="3" placeholder="${esc(T('Write your answer and working here'))}" ${o.readonly ? 'readonly' : ''}>${esc(st.texts[i] || '')}</textarea>${scheme}</div>`;
     }).join('');
     const t = topic(q.topic), max = sqMax(q);
     const num = o.num != null ? `<span class="qnum">${o.num}.</span>` : '';
@@ -478,6 +545,15 @@
     on('quit', () => { if (answered) finish(); else { session = null; go('home'); } });
     if (sqMode) {
       app.querySelectorAll('[data-part]').forEach(t => t.oninput = () => { st.texts[+t.dataset.part] = t.value; });
+      st.draws = st.draws || []; st.tools = st.tools || [];
+      if (!st.revealed) app.querySelectorAll('svg[data-draw]').forEach(el => bindDraw(el, q.parts[+el.dataset.draw].draw, st, +el.dataset.draw));
+      app.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => {
+        const [i, t] = b.dataset.tool.split(':'); st.tools[+i] = t;
+        b.parentNode.querySelectorAll('[data-tool]').forEach(x => x.classList.toggle('on', x === b));
+      });
+      const redrawPart = i => { const el = app.querySelector(`svg[data-draw="${i}"] g.mine`); if (el) el.innerHTML = (st.draws[i] || []).map(strokeSVG).join(''); };
+      app.querySelectorAll('[data-undo]').forEach(b => b.onclick = () => { const i = +b.dataset.undo; (st.draws[i] || []).pop(); redrawPart(i); });
+      app.querySelectorAll('[data-clear]').forEach(b => b.onclick = () => { const i = +b.dataset.clear; st.draws[i] = []; redrawPart(i); });
       on('reveal', () => { st.revealed = true; recordSQ(id, st, true); save(); renderQuiz(); });
       app.querySelectorAll('[data-tick]').forEach(c => c.onchange = () => {
         const [i, j] = c.dataset.tick.split('.').map(Number);

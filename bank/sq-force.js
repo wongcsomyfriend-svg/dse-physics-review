@@ -291,3 +291,107 @@ addStructured([
     }
   }
 ]);
+
+/* Batch 2: questions with figures and drawing parts (see drawHTML in app.js). */
+(function () {
+  const { svg, line, box, arrow, text, dot, range } = window.draw;
+  // A block resting on a 30° slope; P is the middle of its base, G its centre.
+  const t = 30 * Math.PI / 180, P = [190, 200 - 150 * Math.tan(t)];
+  const n = [-Math.sin(t), -Math.cos(t)], u = [Math.cos(t), -Math.sin(t)];
+  const G = [P[0] + 18 * n[0], P[1] + 18 * n[1]];
+  const r = v => Math.round(v * 10) / 10;
+  const slopeBase = line(`M40 200 H340 V${r(200 - 300 * Math.tan(t))} Z`) +
+    `<g transform="rotate(-30 ${r(P[0])} ${r(P[1])})">${box(P[0] - 30, P[1] - 36, 60, 36)}</g>` +
+    line('M90 200 A50 50 0 0 0 83.3 175', 1.2) + text(100, 192, '30°', { size: 12, anchor: 'start' });
+  const fbd = arrow(G[0], G[1], G[0], G[1] + 75, 2.5) + text(G[0] + 8, G[1] + 72, 'W', { anchor: 'start' }) +
+    arrow(P[0], P[1], P[0] + 70 * n[0], P[1] + 70 * n[1], 2.5) + text(P[0] + 78 * n[0], P[1] + 78 * n[1], 'R') +
+    arrow(P[0] + 30 * u[0], P[1] + 30 * u[1], P[0] + 95 * u[0], P[1] + 95 * u[1], 2.5) + text(P[0] + 104 * u[0], P[1] + 104 * u[1] - 4, 'f');
+  const cliff = graphFrame({
+    aria: 'Grid of height against horizontal distance with the ball starting at a height of 20 m', w: 400, h: 240,
+    x: { max: 42, label: 'x / m', ticks: [10, 20, 30, 40].map(v => [v, String(v)]) },
+    y: { max: 25, label: 'h / m', ticks: [5, 10, 15, 20].map(v => [v, String(v)]) },
+    grid: { x: [5, 10, 15, 20, 25, 30, 35, 40], y: [5, 10, 15, 20] }, dots: [[0, 20]]
+  });
+  const T = Math.sqrt(2 * 20 / 9.81);
+  addStructured([
+    {
+      id: 'SM09', topic: 'force', level: 3, sub: 'Forces on a slope',
+      stem: 'A block of mass 2.0 kg rests without sliding on a rough plane inclined at 30° to the horizontal. (g = 9.81 m s⁻²)',
+      figure: svg(380, 215, 'A block resting on a rough slope inclined at 30 degrees', slopeBase),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the diagram, draw and label arrows to show all the forces acting on the block.',
+          answer: 'Three forces: the weight W acting vertically downwards from the centre of the block; the normal reaction R perpendicular to the slope, away from it; and the friction f acting up the slope, along the surface.',
+          points: ['Weight W vertically downwards [1]', 'Normal reaction R perpendicular to the slope [1]', 'Friction f up the slope, parallel to the surface [1]'],
+          draw: { w: 380, h: 215, base: slopeBase, tools: ['arrow', 'line', 'pen'], aria: 'Slope and block for drawing the forces', snap: [G, P].map(p => p.map(r)), answer: fbd }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Find the size of the friction acting on the block.',
+          answer: 'The block is in equilibrium, so friction balances the component of the weight along the slope:<br>f = mg sin 30° = 2.0 × 9.81 × 0.5 = 9.81 N.',
+          points: ['f = mg sin θ [1M]', '9.81 N [1A]'], num: { v: 9.81, unit: 'N' }
+        },
+        {
+          label: '(c)', marks: 1, q: 'Find the size of the normal reaction on the block.',
+          answer: 'R = mg cos 30° = 2.0 × 9.81 × 0.866 = 17.0 N.', points: ['17.0 N [1]'], num: { v: 16.99, unit: 'N' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'The slope is tilted to 40°. The block now slides down with a constant friction of 8.0 N. Find its acceleration.',
+          answer: 'Resultant force down the slope = mg sin 40° − f = 2.0 × 9.81 × 0.643 − 8.0 = 4.61 N.<br>a = F / m = 4.61 / 2.0 = 2.31 m s⁻².',
+          points: ['Resultant force = mg sin 40° − 8.0 [1M]', '2.31 m s⁻² [1A]'], num: { v: 2.306, unit: 'm s⁻²' }
+        }
+      ],
+      zh: {
+        sub: '斜面上的力',
+        stem: '一塊質量為 2.0 kg 的木塊靜止於一個與水平成 30° 的粗糙斜面上，沒有滑動。（g = 9.81 m s⁻²）',
+        parts: [
+          { q: '在圖上畫出並標示箭號，表示作用於木塊的所有力。', answer: '三個力：由木塊重心豎直向下的重量 W；垂直於斜面、指離斜面的法向反作用力 R；以及沿斜面表面向上的摩擦力 f。', points: ['重量 W 豎直向下 [1]', '法向反作用力 R 垂直於斜面 [1]', '摩擦力 f 沿斜面向上，與表面平行 [1]'] },
+          { q: '求作用於木塊的摩擦力的大小。', answer: '木塊處於平衡，所以摩擦力與重量沿斜面的分量平衡：<br>f = mg sin 30° = 2.0 × 9.81 × 0.5 = 9.81 N。', points: ['f = mg sin θ [1M]', '9.81 N [1A]'] },
+          { q: '求作用於木塊的法向反作用力的大小。', answer: 'R = mg cos 30° = 2.0 × 9.81 × 0.866 = 17.0 N。', points: ['17.0 N [1]'] },
+          { q: '把斜面傾斜至 40°。木塊現在沿斜面滑下，所受摩擦力恆為 8.0 N。求木塊的加速度。', answer: '沿斜面向下的合力 = mg sin 40° − f = 2.0 × 9.81 × 0.643 − 8.0 = 4.61 N。<br>a = F / m = 4.61 / 2.0 = 2.31 m s⁻²。', points: ['合力 = mg sin 40° − 8.0 [1M]', '2.31 m s⁻² [1A]'] }
+        ]
+      }
+    },
+    {
+      id: 'SM10', topic: 'force', level: 4, sub: 'Projectile motion',
+      stem: 'A ball is thrown horizontally at 15 m s⁻¹ from the top of a cliff 20 m above level ground. Neglect air resistance. (g = 9.81 m s⁻²)',
+      figure: svg(380, 190, 'A ball thrown horizontally at 15 m/s from the top of a 20 m cliff',
+        box(60, 60, 70, 110) + line('M20 170 H360', 1.5) + dot(130, 52, 6) + arrow(136, 52, 196, 52) + text(166, 42, '15 m s⁻¹', { size: 12 }) +
+        arrow(45, 111, 45, 54, 1) + arrow(45, 111, 45, 168, 1) + text(40, 115, '20 m', { size: 12, anchor: 'end' })),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'How long does the ball take to reach the ground?',
+          answer: 'Vertically the ball starts from rest: 20 = ½ × 9.81 × t² ⇒ t = 2.02 s.',
+          points: ['s = ½gt² with u_y = 0 [1M]', '2.02 s [1A]'], num: { v: T, unit: 's' }
+        },
+        {
+          label: '(b)', marks: 1, q: 'How far from the foot of the cliff does it land?',
+          answer: 'x = 15 × 2.02 = 30.3 m (the horizontal velocity is constant).', points: ['30.3 m [1]'], num: { v: 15 * T, unit: 'm' }
+        },
+        {
+          label: '(c)', marks: 2, q: 'On the grid, sketch the path of the ball from the top of the cliff (x = 0, h = 20 m) to the ground.',
+          answer: 'A parabola that starts horizontally at (0, 20 m), curves downwards more and more steeply, and meets the ground at about x = 30 m.',
+          points: ['Curved path starting horizontally at (0, 20 m) [1]', 'Reaches the ground at about x = 30 m [1]'],
+          draw: {
+            w: cliff.w, h: cliff.h, base: cliff.base, tools: ['pen', 'line'], aria: 'Grid for sketching the path of the ball',
+            answer: cliff.path(range(0, 15 * T, 30).map(x => [x, Math.max(0, 20 - 4.905 * (x / 15) ** 2)]))
+          }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Find the speed of the ball just before it hits the ground.',
+          answer: 'v_y = gt = 9.81 × 2.02 = 19.8 m s⁻¹; v_x = 15 m s⁻¹.<br>v = √(15² + 19.8²) = 24.8 m s⁻¹.',
+          points: ['v_y = gt = 19.8 m s⁻¹ [1M]', '24.8 m s⁻¹ [1A]'], num: { v: Math.hypot(15, 9.81 * T), unit: 'm s⁻¹' }
+        }
+      ],
+      zh: {
+        sub: '拋體運動',
+        stem: '一個球從高出平地 20 m 的懸崖頂以 15 m s⁻¹ 水平拋出。忽略空氣阻力。（g = 9.81 m s⁻²）',
+        parts: [
+          { q: '球需時多久到達地面？', answer: '在豎直方向，球由靜止開始：20 = ½ × 9.81 × t² ⇒ t = 2.02 s。', points: ['s = ½gt²，u_y = 0 [1M]', '2.02 s [1A]'] },
+          { q: '球落在離懸崖底多遠的地方？', answer: 'x = 15 × 2.02 = 30.3 m（水平速度不變）。', points: ['30.3 m [1]'] },
+          { q: '在方格上繪畫球由懸崖頂（x = 0，h = 20 m）至地面的路徑。', answer: '一條拋物線：在 (0, 20 m) 處起初水平，然後愈來愈陡地向下彎，在約 x = 30 m 處到達地面。', points: ['在 (0, 20 m) 處水平開始的曲線路徑 [1]', '在約 x = 30 m 處到達地面 [1]'] },
+          { q: '求球即將撞擊地面時的速率。', answer: 'v_y = gt = 9.81 × 2.02 = 19.8 m s⁻¹；v_x = 15 m s⁻¹。<br>v = √(15² + 19.8²) = 24.8 m s⁻¹。', points: ['v_y = gt = 19.8 m s⁻¹ [1M]', '24.8 m s⁻¹ [1A]'] }
+        ]
+      }
+    }
+  ]);
+})();

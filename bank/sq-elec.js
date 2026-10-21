@@ -165,3 +165,91 @@ addStructured([
     }
   }
 ]);
+
+/* Batch 2: questions with figures and drawing parts (see drawHTML in app.js). */
+(function () {
+  const { svg, line, arrow, text, dot, circ, range } = window.draw;
+  const crosses = line(range(140, 340, 5).flatMap(x => range(35, 205, 5).map(y => `M${x - 4} ${y - 4} l8 8 m0 -8 l-8 8`)).join(' '), 1);
+  const fieldBase = '<rect x="120" y="20" width="240" height="200" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4"/>' + crosses +
+    arrow(50, 80, 118, 80, 2) + dot(50, 80, 5) + text(50, 68, 'e⁻', { size: 13 }) + text(240, 236, 'magnetic field into page', { size: 12 });
+  const fieldAnswer = '<path d="M120 80 A60 60 0 0 1 120 200" fill="none" stroke="currentColor" stroke-width="2.5"/>' +
+    arrow(180, 135, 180, 150, 2.5) + arrow(125, 200, 95, 200, 2.5);
+  // A wire carrying current into the page at W; P is 4.0 cm (80 units) to its right.
+  const wireBase = circ(190, 115, 10) + line('M183 108 L197 122 M197 108 L183 122', 1.8) + dot(270, 115, 4) + text(278, 110, 'P', { size: 13, anchor: 'start' }) +
+    line('M190 140 H270 M270 120 V146', 1, true) + text(230, 158, '4.0 cm', { size: 12 }) + text(190, 90, '10 A', { size: 12 });
+  const wireAnswer = [30, 55, 80].map(R => `<circle cx="190" cy="115" r="${R}" fill="none" stroke="currentColor" stroke-width="2"/>` + arrow(186, 115 - R, 196, 115 - R, 2)).join('');
+  addStructured([
+    {
+      id: 'SE09', topic: 'elec', level: 4, sub: 'Charged particles in magnetic fields',
+      stem: 'An electron moving at 2.0 × 10⁷ m s⁻¹ enters a region of uniform magnetic field of 2.0 × 10⁻³ T directed into the page, moving at right angles to the field. (Mass of electron = 9.11 × 10⁻³¹ kg; charge of electron = 1.60 × 10⁻¹⁹ C)',
+      figure: svg(380, 245, 'An electron enters a region of uniform magnetic field directed into the page', fieldBase),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the diagram, sketch the path of the electron in the field.',
+          answer: 'The magnetic force on the (negative) electron is at first towards the bottom of the page (Fleming\'s left-hand rule, with the conventional current opposite to the electron\'s velocity). The electron moves clockwise in a semicircle and leaves the field moving to the left.',
+          points: ['Circular arc curving towards the bottom of the page [1]', 'A semicircle, leaving the field moving to the left [1]'],
+          draw: { w: 380, h: 245, base: fieldBase, tools: ['pen', 'arrow'], aria: 'Magnetic field region for sketching the electron path', answer: fieldAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Explain why the path is circular.',
+          answer: 'The magnetic force is always perpendicular to the velocity, so it does no work and the speed stays constant. A force of constant size always at right angles to the motion provides a centripetal force, giving circular motion.',
+          points: ['Force always perpendicular to the velocity / speed constant [1]', 'Constant-size force provides the centripetal force [1]']
+        },
+        {
+          label: '(c)', marks: 2, q: 'Find the radius of the path.',
+          answer: 'evB = mv² / r ⇒ r = mv / (eB) = 9.11 × 10⁻³¹ × 2.0 × 10⁷ / (1.60 × 10⁻¹⁹ × 2.0 × 10⁻³) = 0.057 m (5.7 cm).',
+          points: ['evB = mv²/r [1M]', '0.057 m [1A]'], num: { v: 0.05694, unit: 'm' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'A proton enters the field in the same way at the same speed. State two differences between its path and that of the electron.',
+          answer: 'The proton is positive, so it curves the opposite way (towards the top of the page, anticlockwise). Its mass is about 1840 times larger, so (with the same size of charge) its radius is about 1840 times larger.',
+          points: ['Curves the opposite way (towards the top of the page) [1]', 'Much larger radius (about 1840 times) [1]']
+        }
+      ],
+      zh: {
+        sub: '帶電粒子在磁場中',
+        stem: '一粒以 2.0 × 10⁷ m s⁻¹ 運動的電子，以垂直於磁場的方向進入一個 2.0 × 10⁻³ T、指入紙面的均勻磁場區域。（電子質量 = 9.11 × 10⁻³¹ kg；電子電荷 = 1.60 × 10⁻¹⁹ C）',
+        parts: [
+          { q: '在圖上繪畫電子在磁場中的路徑。', answer: '作用於（帶負電的）電子的磁力起初指向紙的下方（用弗林明左手定則，慣用電流方向與電子速度相反）。電子沿順時針方向作半圓運動，然後向左離開磁場。', points: ['向紙的下方彎曲的圓弧 [1]', '半圓，向左離開磁場 [1]'] },
+          { q: '解釋為甚麼路徑是圓形的。', answer: '磁力總是垂直於速度，所以不做功，速率保持不變。大小不變而總是垂直於運動方向的力提供向心力，形成圓周運動。', points: ['力總是垂直於速度／速率不變 [1]', '大小不變的力提供向心力 [1]'] },
+          { q: '求路徑的半徑。', answer: 'evB = mv² / r ⇒ r = mv / (eB) = 9.11 × 10⁻³¹ × 2.0 × 10⁷ / (1.60 × 10⁻¹⁹ × 2.0 × 10⁻³) = 0.057 m（5.7 cm）。', points: ['evB = mv²/r [1M]', '0.057 m [1A]'] },
+          { q: '一粒質子以相同的方式和速率進入磁場。指出它的路徑與電子的路徑有哪兩點不同。', answer: '質子帶正電，所以向相反方向彎曲（向紙的上方，逆時針）。它的質量約大 1840 倍，所以（電荷大小相同）半徑約大 1840 倍。', points: ['向相反方向（紙的上方）彎曲 [1]', '半徑大得多（約 1840 倍）[1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SE10', topic: 'elec', level: 3, sub: 'Magnetic field of a current',
+      stem: 'A long straight vertical wire carries a current of 10 A into the page. Point P is 4.0 cm from the wire. (μ₀ = 4π × 10⁻⁷ H m⁻¹)',
+      figure: svg(380, 230, 'A wire carrying 10 A into the page, with point P 4.0 cm away', wireBase),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the diagram, draw three field lines to show the magnetic field pattern around the wire, with their direction.',
+          answer: 'Concentric circles centred on the wire, getting further apart further out. By the right-hand grip rule (current into the page) the field lines go clockwise.',
+          points: ['Concentric circles centred on the wire [1]', 'Clockwise direction [1]'],
+          draw: { w: 380, h: 230, base: wireBase, tools: ['pen', 'arrow'], aria: 'Wire for drawing the field pattern', answer: wireAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Find the magnetic field strength at P.',
+          answer: 'B = μ₀I / (2πr) = 4π × 10⁻⁷ × 10 / (2π × 0.040) = 5.0 × 10⁻⁵ T.',
+          points: ['B = μ₀I / (2πr) with r = 0.040 m [1M]', '5.0 × 10⁻⁵ T [1A]'], num: { v: 5.0e-5, unit: 'T' }
+        },
+        { label: '(c)', marks: 1, q: 'State the direction of the magnetic field at P.', answer: 'Towards the bottom of the page (tangent to the clockwise circle through P).', points: ['Towards the bottom of the page [1]'] },
+        {
+          label: '(d)', marks: 2, q: 'A second long wire is placed through P, parallel to the first, carrying 10 A out of the page. Find the force on each metre of the second wire, and state its direction.',
+          answer: 'F = BIL = 5.0 × 10⁻⁵ × 10 × 1 = 5.0 × 10⁻⁴ N per metre. The currents are in opposite directions, so the wires repel: the force on the second wire is away from the first (to the right).',
+          points: ['5.0 × 10⁻⁴ N (per metre) [1]', 'Repulsion: away from the first wire [1]']
+        }
+      ],
+      zh: {
+        sub: '電流的磁場',
+        stem: '一條長直豎直導線載有流入紙面的 10 A 電流。P 點與導線相距 4.0 cm。（μ₀ = 4π × 10⁻⁷ H m⁻¹）',
+        parts: [
+          { q: '在圖上畫出三條磁場線以顯示導線周圍的磁場圖樣，並標示方向。', answer: '以導線為圓心的同心圓，愈外愈疏。根據右手握拳定則（電流流入紙面），磁場線沿順時針方向。', points: ['以導線為圓心的同心圓 [1]', '順時針方向 [1]'] },
+          { q: '求 P 點的磁場強度。', answer: 'B = μ₀I / (2πr) = 4π × 10⁻⁷ × 10 / (2π × 0.040) = 5.0 × 10⁻⁵ T。', points: ['B = μ₀I / (2πr)，其中 r = 0.040 m [1M]', '5.0 × 10⁻⁵ T [1A]'] },
+          { q: '指出 P 點磁場的方向。', answer: '指向紙的下方（與通過 P 的順時針圓相切）。', points: ['指向紙的下方 [1]'] },
+          { q: '把第二條長導線放在通過 P 點、與第一條平行的位置，載有流出紙面的 10 A 電流。求第二條導線每米所受的力，並指出其方向。', answer: 'F = BIL = 5.0 × 10⁻⁵ × 10 × 1 = 每米 5.0 × 10⁻⁴ N。兩電流方向相反，所以兩導線互相排斥：第二條導線所受的力指離第一條導線（向右）。', points: ['5.0 × 10⁻⁴ N（每米）[1]', '互相排斥：指離第一條導線 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

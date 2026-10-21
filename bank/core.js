@@ -74,6 +74,26 @@
   };
 
   /*
+   * A set of graph axes for a drawing part of a structured question (see drawHTML in app.js).
+   * Takes the same options as svgGraph plus grid: { x: [values], y: [values] } for faint grid lines.
+   * Returns { w, h, base, X, Y, path }: base is the axes as SVG markup without the outer <svg>,
+   * X and Y map data values to drawing coordinates, and path(pts, o) draws a model-answer line.
+   */
+  window.graphFrame = function (o) {
+    const w = o.w || 400, h = o.h || 220;
+    const L = 52, Rr = w - 56, Tp = 22, B = h - 30;
+    const xs = Object.assign({ min: 0 }, o.x), ys = Object.assign({ min: 0 }, o.y);
+    const X = x => Math.round((L + (x - xs.min) / (xs.max - xs.min) * (Rr - L)) * 10) / 10;
+    const Y = y => Math.round((B - (y - ys.min) / (ys.max - ys.min) * (B - Tp)) * 10) / 10;
+    const g = o.grid || {};
+    const grid = (g.x || []).map(v => `M${X(v)} ${Tp} V${B}`).concat((g.y || []).map(v => `M${L} ${Y(v)} H${Rr}`)).join(' ');
+    const base = (grid ? `<path d="${grid}" fill="none" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"/>` : '') +
+      window.svgGraph(o).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
+    const path = (pts, p) => `<path d="M${pts.map(([x, y]) => X(x) + ' ' + Y(y)).join(' L')}" fill="none" stroke="currentColor" stroke-width="${(p && p.w) || 2.5}"${p && p.dash ? ' stroke-dasharray="6 4"' : ''}/>`;
+    return { w, h, base, X, Y, path };
+  };
+
+  /*
    * Four small sketch graphs labelled A–D, for "which graph shows…" questions.
    *   panels: [{ f: x => y } or { pts: [[x, y], ...] }, ...] with x and y running from 0 to 1
    *           (y from −1 to 1 when o.mid is true, so the x-axis is drawn across the middle)

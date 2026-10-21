@@ -291,3 +291,86 @@ addStructured([
     }
   }
 ]);
+
+/* Batch 2: questions with figures and drawing parts (see drawHTML in app.js). */
+(function () {
+  const { svg, line, arrow, text, dot } = window.draw;
+  // Ray diagram drawn to scale: 1 cm = 5 units; lens at x = 190, axis at y = 110, f = 10 cm, object 30 cm away and 6 cm tall.
+  const lensBase = line('M10 110 H370', 1.2) + line('M190 40 Q204 110 190 180 Q176 110 190 40 Z', 1.8) + arrow(40, 110, 40, 80, 2.2) +
+    [140, 240].map(x => line(`M${x} 105 V115`, 1.5) + text(x, 128, 'F', { size: 12 })).join('') + text(40, 128, 'O', { size: 12 }) +
+    line('M40 140 H190', 1, true) + text(115, 152, '30 cm', { size: 12 }) + line('M190 140 H240', 1, true) + text(215, 152, '10 cm', { size: 12 });
+  const lensAnswer = line('M40 80 H190 L330 164', 2.2) + line('M40 80 L330 138', 2.2) + arrow(265, 110, 265, 125, 2.5) + text(272, 140, 'I', { size: 13, anchor: 'start' });
+  // Semicircular glass block: flat face along y = 90, centre O at (190, 90), radius 90.
+  const s30 = Math.sin(Math.PI / 6), c30 = Math.cos(Math.PI / 6), r = Math.asin(1.5 * s30);
+  const rnd = v => Math.round(v * 10) / 10;
+  const blockBase = line('M100 90 H280 A90 90 0 0 1 100 90 Z') + line('M190 10 V195', 1, true) +
+    line(`M${rnd(190 - 115 * s30)} ${rnd(90 + 115 * c30)} L190 90`, 2.2) + arrow(190 - 115 * s30, 90 + 115 * c30, 190 - 85 * s30, 90 + 85 * c30, 2.2) +
+    text(178, 140, '30°', { size: 12, anchor: 'end' }) + text(196, 102, 'O', { size: 12, anchor: 'start' }) +
+    text(320, 60, 'air', { size: 12 }) + text(234, 120, 'glass', { size: 12 });
+  const blockAnswer = line(`M190 90 L${rnd(190 + 100 * Math.sin(r))} ${rnd(90 - 100 * Math.cos(r))}`, 2.4) +
+    `<path d="M190 90 L${rnd(190 + 80 * s30)} ${rnd(90 + 80 * c30)}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="6 4"/>` +
+    text(212, 52, '49°', { size: 12, anchor: 'start' });
+  addStructured([
+    {
+      id: 'SW09', topic: 'wave', level: 4, sub: 'Lenses',
+      stem: 'An object O, 6 cm tall, stands on the principal axis 30 cm from a convex lens of focal length 10 cm. The diagram is drawn to scale; F marks the principal foci.',
+      figure: svg(380, 165, 'An object 30 cm from a convex lens of focal length 10 cm, drawn to scale', lensBase),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the diagram, draw two rays from the top of the object to locate the image, and draw the image.',
+          answer: 'Ray 1 leaves the top of the object parallel to the axis and is refracted through the principal focus F on the far side. Ray 2 passes straight through the optical centre. They cross 15 cm behind the lens, 3 cm below the axis: the image is there.',
+          points: ['Ray parallel to the axis, refracted through F on the far side [1]', 'Ray through the optical centre, undeviated [1]', 'Image drawn where the rays cross, inverted, about 15 cm from the lens [1]'],
+          draw: { w: 380, h: 165, base: lensBase, tools: ['ray', 'line', 'arrow'], aria: 'Ray diagram to complete', snap: [[40, 80], [190, 80], [190, 110], [140, 110], [240, 110]], answer: lensAnswer }
+        },
+        { label: '(b)', marks: 1, q: 'State the nature of the image.', answer: 'Real, inverted and diminished.', points: ['Real, inverted and diminished (all three) [1]'] },
+        {
+          label: '(c)', marks: 2, q: 'Use the lens formula to find the image distance.',
+          answer: '1/u + 1/v = 1/f ⇒ 1/30 + 1/v = 1/10 ⇒ 1/v = 1/15 ⇒ v = 15 cm.',
+          points: ['1/u + 1/v = 1/f with u = 30 cm, f = 10 cm [1M]', 'v = 15 cm [1A]'], num: { v: 15, unit: 'cm' }
+        },
+        { label: '(d)', marks: 1, q: 'Find the height of the image.', answer: 'Magnification m = v/u = 15/30 = 0.5, so the image is 0.5 × 6 = 3 cm tall.', points: ['3 cm [1]'], num: { v: 3, unit: 'cm' } }
+      ],
+      zh: {
+        sub: '透鏡',
+        stem: '一個高 6 cm 的物體 O 豎立在主軸上，與一塊焦距為 10 cm 的凸透鏡相距 30 cm。圖按比例繪畫；F 標示主焦點。',
+        parts: [
+          { q: '在圖上從物體頂端畫出兩條光線以確定像的位置，並畫出像。', answer: '光線 1 從物體頂端平行於主軸射出，折射後通過另一邊的主焦點 F。光線 2 直線通過光心。兩線在透鏡後 15 cm、主軸下 3 cm 處相交：像就在那裏。', points: ['平行於主軸的光線折射後通過另一邊的 F [1]', '通過光心的光線不偏折 [1]', '在兩線相交處畫出倒立的像，離透鏡約 15 cm [1]'] },
+          { q: '指出像的性質。', answer: '實像、倒立、縮小。', points: ['實像、倒立、縮小（三項都要）[1]'] },
+          { q: '利用透鏡公式求像距。', answer: '1/u + 1/v = 1/f ⇒ 1/30 + 1/v = 1/10 ⇒ 1/v = 1/15 ⇒ v = 15 cm。', points: ['1/u + 1/v = 1/f，其中 u = 30 cm、f = 10 cm [1M]', 'v = 15 cm [1A]'] },
+          { q: '求像的高度。', answer: '放大率 m = v/u = 15/30 = 0.5，所以像高 0.5 × 6 = 3 cm。', points: ['3 cm [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SW10', topic: 'wave', level: 4, sub: 'Total internal reflection',
+      stem: 'A ray of light travels along a radius of a semicircular glass block of refractive index 1.50 and meets the flat face at its centre O. The angle of incidence at O is 30°.',
+      figure: svg(380, 200, 'A ray inside a semicircular glass block meets the flat face at the centre O at 30 degrees to the normal', blockBase),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'Find the critical angle of the glass.',
+          answer: 'sin C = 1 / n = 1 / 1.50 ⇒ C = 41.8°.', points: ['sin C = 1/n [1M]', '41.8° [1A]'], num: { v: 41.81, unit: '°' }
+        },
+        {
+          label: '(b)', marks: 3, q: 'On the diagram, complete the path of the light after it reaches O.',
+          answer: '30° is less than the critical angle, so most of the light is refracted out into the air, bending away from the normal: sin r = 1.50 × sin 30° = 0.75, so r = 49°. A weak reflected ray also returns into the glass at 30° on the other side of the normal, leaving along a radius.',
+          points: ['Refracted ray into the air, bending away from the normal [1]', 'Angle of refraction about 49° [1]', 'Weak partially reflected ray at 30° inside the glass [1]'],
+          draw: { w: 380, h: 200, base: blockBase, tools: ['ray', 'line', 'arrow'], aria: 'Semicircular block for completing the ray', snap: [[190, 90]], answer: blockAnswer }
+        },
+        {
+          label: '(c)', marks: 2, q: 'The ray is moved so that the angle of incidence at O becomes 50°. Describe and explain what happens to the light at O.',
+          answer: '50° is greater than the critical angle (41.8°) and the light is going from glass (optically denser) towards air, so no light is refracted out: it is totally internally reflected at 50°.',
+          points: ['Total internal reflection occurs [1]', 'Because 50° > critical angle, going from the denser medium [1]']
+        }
+      ],
+      zh: {
+        sub: '全內反射',
+        stem: '一道光線沿一塊折射率為 1.50 的半圓形玻璃塊的半徑傳播，射到平面的中心 O。在 O 處的入射角是 30°。',
+        parts: [
+          { q: '求玻璃的臨界角。', answer: 'sin C = 1 / n = 1 / 1.50 ⇒ C = 41.8°。', points: ['sin C = 1/n [1M]', '41.8° [1A]'] },
+          { q: '在圖上完成光線到達 O 後的路徑。', answer: '30° 小於臨界角，所以大部分光折射進入空氣，偏離法線：sin r = 1.50 × sin 30° = 0.75，所以 r = 49°。另有一道較弱的反射光以 30° 在法線另一邊返回玻璃，沿半徑射出。', points: ['折射光進入空氣，偏離法線 [1]', '折射角約 49° [1]', '在玻璃內以 30° 反射的較弱光線 [1]'] },
+          { q: '移動光線，使在 O 處的入射角變為 50°。描述並解釋光在 O 處的情況。', answer: '50° 大於臨界角（41.8°），而且光由玻璃（光密介質）射向空氣，所以沒有光折射出去：光在 O 處以 50° 全內反射。', points: ['發生全內反射 [1]', '因為 50° > 臨界角，且由光密介質射出 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

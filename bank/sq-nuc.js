@@ -156,3 +156,90 @@ addStructured([
     }
   }
 ]);
+
+/* Batch 2: questions with figures and drawing parts (see drawHTML in app.js). */
+(function () {
+  const { svg, line, arrow, text, box, range } = window.draw;
+  const decay = graphFrame({
+    aria: 'Empty grid for plotting corrected count rate against time', w: 400, h: 250,
+    x: { max: 62, label: 't / min', ticks: [10, 20, 30, 40, 50, 60].map(v => [v, String(v)]) },
+    y: { max: 450, label: 'C / min⁻¹', ticks: [100, 200, 300, 400].map(v => [v, String(v)]) },
+    grid: { x: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], y: [50, 100, 150, 200, 250, 300, 350, 400] }
+  });
+  const pts = [[0, 400], [10, 252], [20, 159], [30, 100], [40, 63], [50, 40]];
+  const decayAnswer = pts.map(([x, y]) => `<path d="M${decay.X(x) - 5} ${decay.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`).join('') +
+    decay.path(range(0, 55, 55).map(t => [t, 400 * Math.pow(2, -t / 15)]));
+  const plates = line('M100 40 H330 M100 180 H330', 4) + text(92, 45, '+', { anchor: 'end' }) + text(92, 185, '−', { anchor: 'end' }) +
+    box(20, 100, 26, 20) + arrow(46, 110, 98, 110, 2) + text(72, 98, 'α, β, γ', { size: 11 });
+  const curve = f => 'M' + range(100, 340, 30).map(x => Math.round(x) + ' ' + Math.round(f(x) * 10) / 10).join(' L');
+  const platesAnswer = line('M100 110 H370', 2.2) + text(376, 114, 'γ', { anchor: 'start' }) +
+    line(curve(x => 110 + 22 * ((x - 100) / 240) ** 2), 2.2) + text(376, 140, 'α', { anchor: 'start' }) +
+    line('M' + range(100, 340, 80).map(x => [x, 110 - 120 * ((x - 100) / 240) ** 2]).filter(([, y]) => y >= 43).map(([x, y]) => Math.round(x) + ' ' + Math.round(y * 10) / 10).join(' L'), 2.2) + text(250, 56, 'β', { anchor: 'start' });
+  addStructured([
+    {
+      id: 'SN09', topic: 'nuc', level: 3, sub: 'Half-life',
+      stem: 'A GM counter is used to measure the count rate from a radioactive source. The background count rate is 20 counts per minute.<br><table class="dtable"><tr><th>t / min</th><td>0</td><td>10</td><td>20</td><td>30</td><td>40</td><td>50</td></tr><tr><th>Measured count rate / min⁻¹</th><td>420</td><td>272</td><td>179</td><td>120</td><td>83</td><td>60</td></tr></table>',
+      parts: [
+        { label: '(a)', marks: 1, q: 'Find the corrected count rate C for each reading.', answer: 'Subtract the background of 20 min⁻¹: C = 400, 252, 159, 100, 63 and 40 min⁻¹.', points: ['All six corrected values [1]'] },
+        {
+          label: '(b)', marks: 2, q: 'On the grid, plot C against t and draw a smooth best-fit curve.',
+          answer: 'The six points lie on a smooth exponential decay curve, falling from 400 min⁻¹ and halving every 15 min.',
+          points: ['Corrected points plotted correctly [1]', 'Smooth curve (not straight lines joining the points) [1]'],
+          draw: { w: decay.w, h: decay.h, base: decay.base, tools: ['pen', 'line'], aria: 'Grid for plotting the decay curve', answer: decayAnswer }
+        },
+        {
+          label: '(c)', marks: 2, q: 'Use your graph to find the half-life of the source.',
+          answer: 'C falls from 400 to 200 min⁻¹ in about 15 min (and from 200 to 100 min⁻¹ in another 15 min). Half-life ≈ 15 min.',
+          points: ['Reads the time for C to halve from the corrected curve [1M]', 'About 15 min [1A]'], num: { v: 15, unit: 'min', tol: 0.07 }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Predict the measured count rate at t = 60 min.',
+          answer: '60 min = 4 half-lives, so C = 400 / 2⁴ = 25 min⁻¹. Measured count rate = 25 + 20 = 45 min⁻¹.',
+          points: ['Corrected rate 25 min⁻¹ [1M]', 'Adds back the background: 45 min⁻¹ [1A]'], num: { v: 45, unit: 'min⁻¹' }
+        }
+      ],
+      zh: {
+        sub: '半衰期',
+        stem: '用 GM 計數器量度一個放射源的計數率。本底計數率為每分鐘 20 次。<br><table class="dtable"><tr><th>t / min</th><td>0</td><td>10</td><td>20</td><td>30</td><td>40</td><td>50</td></tr><tr><th>量得的計數率 / min⁻¹</th><td>420</td><td>272</td><td>179</td><td>120</td><td>83</td><td>60</td></tr></table>',
+        parts: [
+          { q: '求每個讀數經校正的計數率 C。', answer: '減去本底 20 min⁻¹：C = 400、252、159、100、63 和 40 min⁻¹。', points: ['六個校正值都正確 [1]'] },
+          { q: '在方格上描繪 C 對 t 的關係，並畫出一條平滑的最佳擬合曲線。', answer: '六點都在一條平滑的指數衰減曲線上，由 400 min⁻¹ 開始，每 15 min 減半。', points: ['經校正的點描繪正確 [1]', '平滑曲線（不是把各點以直線連起）[1]'] },
+          { q: '利用你的線圖，求放射源的半衰期。', answer: 'C 由 400 降至 200 min⁻¹ 約需 15 min（再過 15 min 由 200 降至 100 min⁻¹）。半衰期 ≈ 15 min。', points: ['從經校正的曲線讀出 C 減半所需的時間 [1M]', '約 15 min [1A]'] },
+          { q: '預測 t = 60 min 時量得的計數率。', answer: '60 min = 4 個半衰期，所以 C = 400 / 2⁴ = 25 min⁻¹。量得的計數率 = 25 + 20 = 45 min⁻¹。', points: ['經校正的計數率 25 min⁻¹ [1M]', '加回本底：45 min⁻¹ [1A]'] }
+        ]
+      }
+    },
+    {
+      id: 'SN10', topic: 'nuc', level: 4, sub: 'Radiation in fields',
+      stem: 'A narrow beam containing α particles, β particles and γ rays passes in a vacuum between two parallel plates with a strong electric field between them. The upper plate is positive.',
+      figure: svg(390, 200, 'A beam of alpha, beta and gamma radiation enters the field between two charged parallel plates', plates),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the diagram, sketch and label the paths of the α particles, the β particles and the γ rays.',
+          answer: 'γ rays are uncharged and go straight on. α particles (positive) curve slightly towards the negative (lower) plate. β particles (negative) curve much more strongly towards the positive (upper) plate.',
+          points: ['γ undeflected [1]', 'α bends slightly towards the negative plate [1]', 'β bends more strongly towards the positive plate [1]'],
+          draw: { w: 390, h: 200, base: plates, tools: ['pen', 'line'], aria: 'Plates for sketching the paths of the radiation', answer: platesAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Explain why the β particles are deflected much more than the α particles, although the α particles carry twice as much charge.',
+          answer: 'The acceleration across the field is a = qE / m. An α particle has about 7000 times the mass of a β particle but only twice the charge, so its sideways acceleration (and deflection) is much smaller.',
+          points: ['Acceleration a = qE/m depends on the charge-to-mass ratio [1]', 'α mass is thousands of times larger; charge only twice [1]']
+        },
+        {
+          label: '(c)', marks: 2, q: 'An α particle has a kinetic energy of 5.0 MeV. Find its speed. (Mass of α particle = 6.64 × 10⁻²⁷ kg; 1 MeV = 1.60 × 10⁻¹³ J)',
+          answer: 'KE = 5.0 × 1.60 × 10⁻¹³ = 8.0 × 10⁻¹³ J. ½mv² = KE ⇒ v = √(2 × 8.0 × 10⁻¹³ / 6.64 × 10⁻²⁷) = 1.55 × 10⁷ m s⁻¹.',
+          points: ['KE = 8.0 × 10⁻¹³ J and ½mv² = KE [1M]', '1.55 × 10⁷ m s⁻¹ [1A]'], num: { v: 1.552e7, unit: 'm s⁻¹' }
+        }
+      ],
+      zh: {
+        sub: '輻射在場中',
+        stem: '一束含有 α 粒子、β 粒子和 γ 射線的窄輻射束，在真空中穿過兩塊平行板之間的強電場。上板帶正電。',
+        parts: [
+          { q: '在圖上繪畫並標示 α 粒子、β 粒子和 γ 射線的路徑。', answer: 'γ 射線不帶電，直線前進。α 粒子（帶正電）稍為向負（下）板彎曲。β 粒子（帶負電）較強烈地向正（上）板彎曲。', points: ['γ 不偏轉 [1]', 'α 稍為向負板彎曲 [1]', 'β 較強烈地向正板彎曲 [1]'] },
+          { q: '雖然 α 粒子所帶的電荷是 β 粒子的兩倍，解釋為甚麼 β 粒子的偏轉比 α 粒子大得多。', answer: '橫越電場的加速度 a = qE / m。α 粒子的質量約為 β 粒子的 7000 倍，但電荷只是兩倍，所以它的橫向加速度（及偏轉）小得多。', points: ['加速度 a = qE/m，取決於荷質比 [1]', 'α 的質量大數千倍，電荷只是兩倍 [1]'] },
+          { q: '一粒 α 粒子的動能是 5.0 MeV。求它的速率。（α 粒子質量 = 6.64 × 10⁻²⁷ kg；1 MeV = 1.60 × 10⁻¹³ J）', answer: 'KE = 5.0 × 1.60 × 10⁻¹³ = 8.0 × 10⁻¹³ J。½mv² = KE ⇒ v = √(2 × 8.0 × 10⁻¹³ / 6.64 × 10⁻²⁷) = 1.55 × 10⁷ m s⁻¹。', points: ['KE = 8.0 × 10⁻¹³ J 及 ½mv² = KE [1M]', '1.55 × 10⁷ m s⁻¹ [1A]'] }
+        ]
+      }
+    }
+  ]);
+})();
