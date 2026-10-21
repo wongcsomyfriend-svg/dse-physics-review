@@ -75,6 +75,7 @@ window.I18N = {
     '{m} multiple-choice and {s} structured questions match': '符合條件：多項選擇題 {m} 題、結構式題目 {s} 題',
     'No questions match. Choose more topics or levels.': '沒有符合條件的題目。請選擇更多課題或程度。',
     'Structured question': '結構式題目',
+    'Experiment': '實驗題',
     'Structured questions': '結構式題目',
     'Show marking scheme': '顯示評卷參考',
     'Line': '直線',
@@ -298,6 +299,10 @@ window.I18N = {
       '>control rods<': '>控制棒<',
       '>coolant<': '>冷卻劑<',
       '>heater<': '>電熱器<',
+      '>trapped air<': '>被困空氣<',
+      '>index<': '>液柱<',
+      '>ray box<': '>光箱<',
+      '>rheostat<': '>變阻器<',
       '>+ energy<': '>+ 能量<',
       '>0.25 L per stroke<': '>每抽一次 0.25 L<'
     }

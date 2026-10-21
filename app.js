@@ -276,7 +276,7 @@
     const foot = reveal
       ? `<div class="sqtotal">${T('Your total: {a} / {b} marks', { a: sqGot(st), b: max })}</div>`
       : (o.readonly ? '' : `<div class="row" style="margin-top:14px"><button class="btn primary" id="reveal">${T('Show marking scheme')}</button><span class="muted">${markWord(max)}</span></div>`);
-    return `<div class="qhead">${num}${of}<span class="tag sqtag">${T('Structured question')}</span><span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span>${lbadge(level(q.level))}</div>
+    return `<div class="qhead">${num}${of}<span class="tag sqtag">${T('Structured question')}</span>${q.kind === 'exp' ? `<span class="tag exptag">${T('Experiment')}</span>` : ''}<span class="tag">${esc(tname(t))}</span><span>${esc(q.sub)}</span>${lbadge(level(q.level))}</div>
       <div class="stem">${q.stem}</div>${q.figure ? `<div class="figure">${q.figure}</div>` : ''}<div class="parts">${parts}</div>${foot}`;
   }
   // Save a structured attempt into the stored progress.

@@ -374,3 +374,134 @@ addStructured([
     }
   ]);
 })();
+
+/* Batch 3: an experiment question (kind: 'exp') and questions with drawing parts. */
+(function () {
+  const { svg, line, box, arrow, text, dot, range } = window.draw;
+  const cross = (f, x, y) => `<path d="M${f.X(x) - 5} ${f.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`;
+  const eye = (x, y) => line(`M${x - 12} ${y} Q${x} ${y - 9} ${x + 12} ${y} Q${x} ${y + 9} ${x - 12} ${y}`, 1.5) + dot(x, y, 3);
+  // Plane mirror on x = 200; object O at (120, 60); eye at (100, 150). Image I at (280, 60); the ray reflects at M (200, 100).
+  const mirrorBase = line('M60 20 H340 M60 40 H340 M60 60 H340 M60 80 H340 M60 100 H340 M60 120 H340 M60 140 H340 M60 160 H340 M60 180 H340 ' +
+      'M60 20 V180 M80 20 V180 M100 20 V180 M120 20 V180 M140 20 V180 M160 20 V180 M180 20 V180 M220 20 V180 M240 20 V180 M260 20 V180 M280 20 V180 M300 20 V180 M320 20 V180 M340 20 V180', 0.5, true) +
+    line('M200 15 V185', 3.5) + line(range(22, 182, 10).map(y => `M200 ${y} l8 -7`).join(' '), 1) + dot(120, 60, 5) + text(112, 52, 'O', { anchor: 'end' }) + eye(100, 150);
+  const mirrorAnswer = line('M120 60 H280', 1.2, true) + dot(280, 60, 5) + text(288, 56, 'I', { anchor: 'start' }) + line('M200 100 L280 60', 1.5, true) +
+    arrow(120, 60, 160, 80, 2.2) + line('M160 80 L200 100', 2.2) + arrow(200, 100, 150, 125, 2.2) + line('M150 125 L112 144', 2.2);
+  // Refractive index: n = 1.50
+  const iv = [20, 30, 40, 50, 60], rv = iv.map(i => Math.asin(Math.sin(i * Math.PI / 180) / 1.5) * 180 / Math.PI);
+  const sn = graphFrame({
+    aria: 'Empty grid for plotting sin i against sin r', w: 400, h: 240,
+    x: { max: 0.68, label: 'sin r', ticks: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6].map(v => [v, v.toFixed(1)]) },
+    y: { max: 1.0, label: 'sin i', ticks: [0.2, 0.4, 0.6, 0.8, 1.0].map(v => [v, v.toFixed(1)]) },
+    grid: { x: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65], y: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] }
+  });
+  const snAnswer = iv.map(i => { const s = Math.sin(i * Math.PI / 180); return cross(sn, s / 1.5, s); }).join('') + sn.path([[0, 0], [0.65, 0.975]]);
+  // Concave lens: 1 cm = 5 units; lens at x = 220, f = 15 cm; object 30 cm away and 6 cm tall; image 10 cm from the lens, 2 cm tall.
+  const concBase = line('M10 110 H380', 1.2) + line('M211 45 H229 Q222 110 229 175 H211 Q218 110 211 45 Z', 1.8) + arrow(70, 110, 70, 80, 2.2) + text(70, 128, 'O', { size: 12 }) +
+    [145, 295].map(x => line(`M${x} 105 V115`, 1.5) + text(x, 128, 'F', { size: 12 })).join('') +
+    line('M70 145 H220', 1, true) + text(145, 158, '30 cm', { size: 12 }) + line('M220 160 H295', 1, true) + text(258, 172, '15 cm', { size: 12 });
+  const concAnswer = line('M70 80 H220 L360 24', 2.2) + line('M220 80 L145 110', 1.4, true) + line('M70 80 L360 138', 2.2) + arrow(170, 110, 170, 100, 2.5) + text(164, 96, 'I', { size: 13, anchor: 'end' });
+  addStructured([
+    {
+      id: 'SW11', topic: 'wave', level: 3, sub: 'Plane mirrors',
+      stem: 'An object O is in front of a vertical plane mirror, drawn on a grid of 1 cm squares. An eye looks into the mirror.',
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the diagram, mark the position of the image I of O, and draw a ray from O that reflects off the mirror into the eye.',
+          answer: 'I is 4 squares behind the mirror, level with O (as far behind the mirror as O is in front). Join I to the eye: the line crosses the mirror at the point where the ray reflects. The ray goes from O to that point, then to the eye.',
+          points: ['Image as far behind the mirror as O is in front, on the normal through O [1]', 'Reflected ray drawn along the line from I to the eye [1]', 'Incident ray from O to the same point on the mirror, with arrows [1]'],
+          draw: { w: 380, h: 200, base: mirrorBase, tools: ['line', 'arrow'], aria: 'Grid with a plane mirror, an object and an eye', snap: [[120, 60], [100, 150], [280, 60], [200, 100]], answer: mirrorAnswer }
+        },
+        { label: '(b)', marks: 1, q: 'State two properties of the image.', answer: 'Any two: virtual; upright; the same size as the object; laterally inverted; as far behind the mirror as the object is in front.', points: ['Any two correct properties [1]'] },
+        {
+          label: '(c)', marks: 2, q: 'A boy walks towards the mirror at 0.50 m s⁻¹. At what speed does his image approach him?',
+          answer: 'The image moves towards the mirror at 0.50 m s⁻¹ too, in the opposite direction, so the image approaches the boy at 0.50 + 0.50 = 1.0 m s⁻¹.',
+          points: ['Image also moves at 0.50 m s⁻¹ towards the mirror [1M]', '1.0 m s⁻¹ [1A]'], num: { v: 1.0, unit: 'm s⁻¹' }
+        }
+      ],
+      zh: {
+        sub: '平面鏡',
+        stem: '一個物體 O 放在豎直平面鏡前，畫在 1 cm 方格紙上。一隻眼睛望向鏡子。',
+        parts: [
+          { q: '在圖上標出 O 的像 I 的位置，並畫出一條由 O 發出、經鏡子反射後進入眼睛的光線。', answer: 'I 在鏡後 4 格，與 O 同一水平（像與鏡的距離等於物與鏡的距離）。把 I 與眼睛連起：該線與鏡子相交處就是光線的反射點。光線由 O 射到該點，再射入眼睛。', points: ['像在鏡後的距離等於 O 在鏡前的距離，在通過 O 的法線上 [1]', '反射光線沿 I 至眼睛的直線畫出 [1]', '入射光線由 O 射到鏡上同一點，並標示箭號 [1]'] },
+          { q: '指出像的兩個特性。', answer: '任何兩項：虛像；正立；與物體大小相同；左右倒置；像與鏡的距離等於物與鏡的距離。', points: ['任何兩項正確的特性 [1]'] },
+          { q: '一名男孩以 0.50 m s⁻¹ 走向鏡子。他的像以多快的速率接近他？', answer: '像亦以 0.50 m s⁻¹ 向鏡子移動，方向相反，所以像以 0.50 + 0.50 = 1.0 m s⁻¹ 接近男孩。', points: ['像亦以 0.50 m s⁻¹ 移向鏡子 [1M]', '1.0 m s⁻¹ [1A]'] }
+        ]
+      }
+    },
+    {
+      id: 'SW12', topic: 'wave', level: 4, kind: 'exp', sub: 'Experiment: refractive index',
+      stem: 'You are given a rectangular glass block, a ray box that gives a narrow ray of light, a protractor, a sharp pencil and a sheet of white paper. You are asked to find the refractive index of the glass.',
+      figure: svg(380, 200, 'A ray box shines a narrow ray into a rectangular glass block on white paper; a normal is drawn at the point where the ray enters',
+        '<rect x="130" y="80" width="170" height="90" fill="currentColor" fill-opacity="0.1"/>' + box(130, 80, 170, 90, 1.8) + box(30, 10, 50, 30, 1.8) +
+        line('M80 30 L170 80', 2) + line('M170 40 V190', 1, true) + line('M170 80 L200 170', 1.5, true) + text(160, 62, 'i', { size: 13, anchor: 'end' }) + text(186, 112, 'r', { size: 13, anchor: 'start' }) +
+        text(55, 56, 'ray box', { size: 11 }) + text(255, 130, 'glass', { size: 12 })),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'Describe how you would find one pair of values of the angle of incidence i and the angle of refraction r, and how you would complete the experiment.',
+          answer: 'Draw round the block on the paper. Draw a normal where the ray enters and shine the ray at the point of entry at a measured angle i. Mark the emergent ray with two crosses far apart, remove the block and join the point of exit to the point of entry: this is the refracted ray. Measure r with the protractor. Repeat for several values of i (e.g. 20° to 60°).',
+          points: ['Outline of the block and the normal at the point of incidence drawn [1]', 'Refracted ray found by marking the emergent ray and joining the points of entry and exit [1]', 'i and r measured with the protractor for several values of i [1]']
+        },
+        {
+          label: '(b)', marks: 1, q: 'Which graph would you plot to find the refractive index, and how?',
+          answer: 'Plot sin i against sin r. It is a straight line through the origin, and its gradient is the refractive index n (Snell\'s law, sin i = n sin r).',
+          points: ['sin i against sin r; gradient = n [1]']
+        },
+        {
+          label: '(c)', marks: 3, q: 'These results were obtained:<br><table class="dtable"><tr><th>i / °</th>' + iv.map(i => `<td>${i}</td>`).join('') + '</tr><tr><th>r / °</th>' + rv.map(r => `<td>${r.toFixed(1)}</td>`).join('') + '</tr></table>Calculate sin i and sin r, then plot sin i against sin r and draw the best-fit line.',
+          answer: 'sin i = 0.342, 0.500, 0.643, 0.766, 0.866; sin r = 0.228, 0.333, 0.428, 0.511, 0.577. The points lie on a straight line through the origin.',
+          points: ['sin i and sin r calculated correctly [1]', 'Points plotted correctly [1]', 'Straight best-fit line through the origin [1]'],
+          draw: { w: sn.w, h: sn.h, base: sn.base, tools: ['line', 'pen'], aria: 'Grid for plotting sin i against sin r', answer: snAnswer }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Use the gradient of your graph to find the refractive index of the glass.',
+          answer: 'Gradient = 0.975 / 0.65 = 1.50, so n = 1.50.', points: ['n = gradient [1M]', '1.50 (1.45 to 1.55) [1A]'], num: { v: 1.5, unit: '', tol: 0.034 }
+        },
+        {
+          label: '(e)', marks: 1, q: 'State one precaution that would improve the accuracy of the result.',
+          answer: 'For example: use a narrow ray and mark points far apart along it; use large angles of incidence so that the angles are measured with a smaller percentage error.',
+          points: ['A valid precaution, e.g. narrow ray / marks far apart / large angles [1]']
+        }
+      ],
+      zh: {
+        sub: '實驗：折射率',
+        stem: '你獲提供一塊長方形玻璃塊、一個能發出窄光線的光箱、一個量角器、一枝尖鉛筆和一張白紙。你需要求玻璃的折射率。',
+        parts: [
+          { q: '描述你會怎樣求得一組入射角 i 和折射角 r 的數值，以及怎樣完成實驗。', answer: '在紙上沿玻璃塊畫出輪廓。在光線射入處畫一條法線，並以量度好的入射角 i 把光線射向入射點。在射出的光線上標記兩個相距較遠的交叉，移走玻璃塊，把出射點與入射點連起：這就是折射光線。用量角器量度 r。用數個不同的 i（例如 20° 至 60°）重複實驗。', points: ['畫出玻璃塊輪廓及入射點的法線 [1]', '標記出射光線並連接入射點和出射點，以找出折射光線 [1]', '用量角器為數個不同的 i 量度 i 和 r [1]'] },
+          { q: '你會描繪哪個線圖來求折射率？怎樣求？', answer: '描繪 sin i 對 sin r 的關係。它是一條通過原點的直線，斜率就是折射率 n（斯涅爾定律，sin i = n sin r）。', points: ['sin i 對 sin r；斜率 = n [1]'] },
+          { q: '得到以下結果：<br><table class="dtable"><tr><th>i / °</th>' + iv.map(i => `<td>${i}</td>`).join('') + '</tr><tr><th>r / °</th>' + rv.map(r => `<td>${r.toFixed(1)}</td>`).join('') + '</tr></table>計算 sin i 和 sin r，然後描繪 sin i 對 sin r 的關係並畫出最佳擬合線。', answer: 'sin i = 0.342、0.500、0.643、0.766、0.866；sin r = 0.228、0.333、0.428、0.511、0.577。各點在一條通過原點的直線上。', points: ['sin i 和 sin r 計算正確 [1]', '各點描繪正確 [1]', '通過原點的最佳擬合直線 [1]'] },
+          { q: '利用線圖的斜率求玻璃的折射率。', answer: '斜率 = 0.975 / 0.65 = 1.50，所以 n = 1.50。', points: ['n = 斜率 [1M]', '1.50（1.45 至 1.55）[1A]'] },
+          { q: '指出一項可提高結果準確度的預防措施。', answer: '例如：使用窄光線，並在光線上相距較遠處標記；使用較大的入射角，使量度角度的百分誤差較小。', points: ['合理的預防措施，例如窄光線／標記相距較遠／使用較大的角度 [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SW13', topic: 'wave', level: 4, sub: 'Lenses',
+      stem: 'An object O, 6 cm tall, stands on the principal axis 30 cm from a concave (diverging) lens of focal length 15 cm. The diagram is drawn to scale; F marks the principal foci.',
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the diagram, draw two rays from the top of the object to locate the image, and draw the image.',
+          answer: 'Ray 1 leaves the top of O parallel to the axis and is refracted away from the axis, as if it came from F on the object side (dashed back-extension). Ray 2 passes straight through the optical centre. The back-extension of ray 1 meets ray 2 at the top of the image, 10 cm from the lens on the object side, 2 cm tall and upright.',
+          points: ['Ray parallel to the axis diverges as if from F on the object side, with a dashed extension [1]', 'Ray through the optical centre, undeviated [1]', 'Upright virtual image where the extension meets the second ray [1]'],
+          draw: { w: 380, h: 180, base: concBase, tools: ['ray', 'line', 'arrow'], aria: 'Ray diagram for a concave lens to complete', snap: [[70, 80], [220, 80], [220, 110], [145, 110], [295, 110]], answer: concAnswer }
+        },
+        { label: '(b)', marks: 1, q: 'State the nature of the image.', answer: 'Virtual, upright and diminished.', points: ['Virtual, upright and diminished (all three) [1]'] },
+        {
+          label: '(c)', marks: 2, q: 'Use the lens formula to find the image distance.',
+          answer: 'With f = −15 cm for a diverging lens: 1/30 + 1/v = −1/15 ⇒ 1/v = −1/10 ⇒ v = −10 cm. The image is 10 cm from the lens, on the same side as the object.',
+          points: ['1/u + 1/v = 1/f with f negative [1M]', '10 cm, on the same side as the object [1A]'], num: { v: 10, unit: 'cm' }
+        },
+        { label: '(d)', marks: 1, q: 'Give one use of a concave lens.', answer: 'For example: spectacles to correct short sight; a door viewer (peephole).', points: ['A correct use, e.g. correcting short sight [1]'] }
+      ],
+      zh: {
+        sub: '透鏡',
+        stem: '一個高 6 cm 的物體 O 豎立在主軸上，與一塊焦距為 15 cm 的凹透鏡（發散透鏡）相距 30 cm。圖按比例繪畫；F 標示主焦點。',
+        parts: [
+          { q: '在圖上從物體頂端畫出兩條光線以確定像的位置，並畫出像。', answer: '光線 1 從 O 的頂端平行於主軸射出，折射後偏離主軸，好像從物體那邊的 F 射出（以虛線向後延長）。光線 2 直線通過光心。光線 1 的反向延長線與光線 2 相交於像的頂端：像在物體那邊離透鏡 10 cm 處，高 2 cm，正立。', points: ['平行於主軸的光線折射後發散，好像從物體那邊的 F 射出，並畫出虛線延長線 [1]', '通過光心的光線不偏折 [1]', '在延長線與第二條光線相交處畫出正立的虛像 [1]'] },
+          { q: '指出像的性質。', answer: '虛像、正立、縮小。', points: ['虛像、正立、縮小（三項都要）[1]'] },
+          { q: '利用透鏡公式求像距。', answer: '發散透鏡的 f = −15 cm：1/30 + 1/v = −1/15 ⇒ 1/v = −1/10 ⇒ v = −10 cm。像在物體那邊，離透鏡 10 cm。', points: ['1/u + 1/v = 1/f，f 取負值 [1M]', '10 cm，在物體那邊 [1A]'] },
+          { q: '舉出凹透鏡的一項用途。', answer: '例如：矯正近視的眼鏡；防盜眼（門鏡）。', points: ['正確的用途，例如矯正近視 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

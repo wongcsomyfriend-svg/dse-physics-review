@@ -537,3 +537,146 @@ addStructured([
     }
   ]);
 })();
+
+/* Batch 3: an experiment question (kind: 'exp') and questions with drawing parts. */
+(function () {
+  const { svg, line, box, circ, text, dot, range } = window.draw;
+  const H = window.HFIG || {};
+  const cross = (f, x, y) => `<path d="M${f.X(x) - 5} ${f.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`;
+  // Charles' law: V = 0.1 (θ + 273) cm³
+  const charles = graphFrame({
+    aria: 'Grid for plotting volume against temperature from minus 300 to 120 degrees Celsius', w: 420, h: 250,
+    x: { min: -300, max: 130, label: 'θ / °C', ticks: [-300, -200, -100, 0, 100].map(v => [v, v < 0 ? '−' + (-v) : String(v)]) },
+    y: { max: 42, label: 'V / cm³', ticks: [10, 20, 30, 40].map(v => [v, String(v)]) },
+    grid: { x: range(-300, 100, 8), y: [5, 10, 15, 20, 25, 30, 35, 40] }
+  });
+  const cdata = [[20, 29.3], [40, 31.3], [60, 33.3], [80, 35.3], [100, 37.3]];
+  const charlesAnswer = cdata.map(([x, y]) => cross(charles, x, y)).join('') + charles.path([[20, 29.3], [110, 38.3]]) + charles.path([[-273, 0], [20, 29.3]], { dash: true });
+  // Cooling curve θ = 20 + 60 e^(−t/25), t in minutes
+  const cool = t => 20 + 60 * Math.exp(-t / 25);
+  const cooling = graphFrame({
+    aria: 'Cooling curve of water: temperature against time, falling from 80 towards 20 degrees Celsius', w: 400, h: 250,
+    x: { max: 62, label: 't / min', ticks: [10, 20, 30, 40, 50, 60].map(v => [v, String(v)]) },
+    y: { max: 90, label: 'θ / °C', ticks: [20, 40, 60, 80].map(v => [v, String(v)]) },
+    grid: { x: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60], y: [10, 20, 30, 40, 50, 60, 70, 80] },
+    lines: [{ f: cool, from: 0, to: 60, n: 60 }]
+  });
+  const slope = -60 / 25 * Math.exp(-10 / 25);
+  const tangent = cooling.path([[0, cool(10) - 10 * slope], [35, cool(10) + 25 * slope]]);
+  addStructured([
+    {
+      id: 'SH11', topic: 'heat', level: 4, kind: 'exp', sub: 'Experiment: latent heat of fusion',
+      stem: 'You are given two identical funnels, crushed ice at 0 °C, an immersion heater connected to a power supply through a joulemeter, two beakers, an electronic balance, a stop-watch and two retort stands. You are asked to measure the specific latent heat of fusion of ice.',
+      figure: H.H47 || '',
+      parts: [
+        {
+          label: '(a)', marks: 4, q: 'Describe how you would carry out the experiment. State the measurements you would take and how you would calculate the result.',
+          answer: 'Fill both funnels X and Y with the same amount of crushed ice; put the heater in X and an identical heater (switched off) in Y. Wait until water drips steadily from both. Place an empty beaker under each funnel, switch on the heater in X, note the joulemeter reading E₁ and start the stop-watch. After several minutes switch off, note the joulemeter reading E₂, and remove both beakers at the same time. Find the masses m_X and m_Y of water collected with the balance.<br>ℓ = (E₂ − E₁) / (m_X − m_Y).',
+          points: ['Control funnel Y with the same ice but no heating [1]', 'Water from both funnels collected for the same time while the heater in X is on [1]', 'Joulemeter readings before and after: E = E₂ − E₁ [1]', 'Masses m_X and m_Y found with the balance; ℓ = E / (m_X − m_Y) [1]']
+        },
+        {
+          label: '(b)', marks: 1, q: 'Why is funnel Y needed?',
+          answer: 'Some ice in X melts because of energy absorbed from the surroundings. Y melts by the same amount, so subtracting m_Y leaves only the ice melted by the heater.',
+          points: ['To correct for ice melted by energy from the surroundings [1]']
+        },
+        {
+          label: '(c)', marks: 2, q: 'In one experiment the joulemeter reading changes from 15.2 kJ to 51.0 kJ, m_X = 0.125 kg and m_Y = 0.018 kg. Find the specific latent heat of fusion of ice.',
+          answer: 'E = 51.0 − 15.2 = 35.8 kJ = 3.58 × 10⁴ J; mass melted by the heater = 0.125 − 0.018 = 0.107 kg.<br>ℓ = 3.58 × 10⁴ / 0.107 = 3.35 × 10⁵ J kg⁻¹.',
+          points: ['ℓ = (E₂ − E₁) / (m_X − m_Y) with correct substitution [1M]', '3.35 × 10⁵ J kg⁻¹ [1A]'], num: { v: 3.346e5, unit: 'J kg⁻¹' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Give a reason for (i) using crushed ice and (ii) waiting until water drips steadily before starting.',
+          answer: '(i) Crushed ice makes good thermal contact with the heater, so little energy is lost. (ii) It ensures the ice is at 0 °C and melting, and that the funnels are already wet, so the water collected is all newly melted ice.',
+          points: ['(i) Good thermal contact between the heater and the ice [1]', '(ii) Ice is at 0 °C and melting, funnel already wet [1]']
+        }
+      ],
+      zh: {
+        sub: '實驗：熔解潛熱',
+        stem: '你獲提供兩個相同的漏斗、0 °C 的碎冰、一個經焦耳計連接電源的浸沒式電熱器、兩個燒杯、一個電子天平、一個秒錶和兩個鐵架。你需要量度冰的熔解比潛熱。',
+        parts: [
+          { q: '描述你會怎樣進行實驗。指出你會量度甚麼，以及怎樣計算結果。', answer: '在漏斗 X 和 Y 內放入相同分量的碎冰；把電熱器放進 X，另一個相同但不開動的電熱器放進 Y。等待兩個漏斗都穩定地滴水。在每個漏斗下放一個空燒杯，開動 X 的電熱器，記下焦耳計讀數 E₁ 並開始計時。數分鐘後關掉電熱器，記下焦耳計讀數 E₂，同時取走兩個燒杯。用天平量度收集到的水的質量 m_X 和 m_Y。<br>ℓ = (E₂ − E₁) / (m_X − m_Y)。', points: ['以相同的冰但不加熱的漏斗 Y 作對照 [1]', '在 X 的電熱器開動期間，兩個漏斗收集水的時間相同 [1]', '記錄前後焦耳計讀數：E = E₂ − E₁ [1]', '用天平量度 m_X 和 m_Y；ℓ = E / (m_X − m_Y) [1]'] },
+          { q: '為甚麼需要漏斗 Y？', answer: 'X 內有部分冰因吸收周圍環境的能量而熔化。Y 熔化的分量相同，所以減去 m_Y 後，餘下的只是被電熱器熔化的冰。', points: ['校正因吸收周圍環境的能量而熔化的冰 [1]'] },
+          { q: '在一次實驗中，焦耳計讀數由 15.2 kJ 變為 51.0 kJ，m_X = 0.125 kg，m_Y = 0.018 kg。求冰的熔解比潛熱。', answer: 'E = 51.0 − 15.2 = 35.8 kJ = 3.58 × 10⁴ J；被電熱器熔化的質量 = 0.125 − 0.018 = 0.107 kg。<br>ℓ = 3.58 × 10⁴ / 0.107 = 3.35 × 10⁵ J kg⁻¹。', points: ['ℓ = (E₂ − E₁) / (m_X − m_Y)，代入正確 [1M]', '3.35 × 10⁵ J kg⁻¹ [1A]'] },
+          { q: '分別說明 (i) 使用碎冰和 (ii) 待穩定滴水後才開始的原因。', answer: '(i) 碎冰與電熱器的熱接觸良好，散失的能量較少。(ii) 確保冰處於 0 °C 並正在熔化，而且漏斗已經濕透，收集到的水全是新熔化的冰。', points: ['(i) 電熱器與冰之間熱接觸良好 [1]', '(ii) 冰處於 0 °C 並正在熔化，漏斗已濕透 [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SH12', topic: 'heat', level: 4, sub: "Charles' law",
+      stem: 'A fixed mass of air is trapped in a capillary tube by a short liquid index and heated in a water bath, so that its pressure stays constant. The volume V of the air is measured at different temperatures θ:<br><table class="dtable"><tr><th>θ / °C</th><td>20</td><td>40</td><td>60</td><td>80</td><td>100</td></tr><tr><th>V / cm³</th><td>29.3</td><td>31.3</td><td>33.3</td><td>35.3</td><td>37.3</td></tr></table>',
+      figure: svg(380, 200, 'Air trapped by a liquid index in a capillary tube in a water bath with a thermometer, heated from below',
+        line('M90 40 V170 H290 V40') + '<rect x="90" y="60" width="200" height="110" fill="currentColor" fill-opacity="0.08"/>' + line('M90 60 H290', 1.2) +
+        line('M150 25 V160 M162 25 V160 M150 160 H162', 1.5) + '<rect x="150" y="105" width="12" height="55" fill="currentColor" fill-opacity="0.3"/>' + '<rect x="150" y="97" width="12" height="8" fill="currentColor"/>' +
+        line('M235 25 V150', 2.5) + dot(235, 154, 5) + line('M180 190 q-11 -12 0 -28 q11 16 0 28 Z', 1.5) +
+        line('M162 132 H200 M162 101 H200', 1) + text(204, 136, 'trapped air', { size: 11, anchor: 'start' }) + text(204, 105, 'index', { size: 11, anchor: 'start' })),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the grid, plot V against θ, draw the best-fit line and extend it to V = 0.',
+          answer: 'The points lie on a straight line rising 1.0 cm³ for every 10 °C. Extended (dashed) back to V = 0, it meets the temperature axis at about −273 °C.',
+          points: ['Points plotted correctly [1]', 'Straight best-fit line [1]', 'Line extended to meet V = 0 [1]'],
+          draw: { w: charles.w, h: charles.h, base: charles.base, tools: ['line', 'pen'], aria: 'Grid for plotting V against θ', snap: [[charles.X(-273), charles.Y(0)]], answer: charlesAnswer }
+        },
+        { label: '(b)', marks: 1, q: 'Use your graph to estimate the temperature at which the volume of the air would become zero.', answer: 'About −273 °C.', points: ['−273 °C (accept −265 °C to −280 °C) [1]'], num: { v: -273, unit: '°C', tol: 0.03 } },
+        {
+          label: '(c)', marks: 2, q: 'What is the significance of this temperature, and why could the air never actually reach zero volume?',
+          answer: 'It is absolute zero (0 K), the lowest possible temperature, where the molecules would have minimum kinetic energy. Real air liquefies (and its molecules have volume) before this temperature is reached.',
+          points: ['Absolute zero / 0 K [1]', 'The gas liquefies before reaching it (molecules have a volume of their own) [1]']
+        },
+        {
+          label: '(d)', marks: 2, q: 'Find the volume of the air at 150 °C, at the same pressure.',
+          answer: 'V ∝ T (in kelvin): V = 29.3 × (150 + 273) / (20 + 273) = 29.3 × 423 / 293 = 42.3 cm³.',
+          points: ['V / T constant with T in kelvin [1M]', '42.3 cm³ [1A]'], num: { v: 42.3, unit: 'cm³' }
+        }
+      ],
+      zh: {
+        sub: '查理定律',
+        stem: '一定質量的空氣被一小段液柱困在毛細管內，並放在水浴中加熱，使其壓強保持不變。在不同溫度 θ 量度空氣的體積 V：<br><table class="dtable"><tr><th>θ / °C</th><td>20</td><td>40</td><td>60</td><td>80</td><td>100</td></tr><tr><th>V / cm³</th><td>29.3</td><td>31.3</td><td>33.3</td><td>35.3</td><td>37.3</td></tr></table>',
+        parts: [
+          { q: '在方格上描繪 V 對 θ 的關係，畫出最佳擬合線，並把它延長至 V = 0。', answer: '各點在一條直線上，每 10 °C 上升 1.0 cm³。把直線（以虛線）延長至 V = 0，它與溫度軸相交於約 −273 °C。', points: ['各點描繪正確 [1]', '最佳擬合直線 [1]', '把直線延長至 V = 0 [1]'] },
+          { q: '利用你的線圖，估算空氣體積變為零時的溫度。', answer: '約 −273 °C。', points: ['−273 °C（接受 −265 °C 至 −280 °C）[1]'] },
+          { q: '這個溫度有甚麼意義？為甚麼空氣實際上永遠不會達到零體積？', answer: '它是絕對零度（0 K），即可能的最低溫度，那時分子的動能最小。真實的空氣在達到這溫度前已經液化（而且分子本身佔有體積）。', points: ['絕對零度／0 K [1]', '氣體在達到該溫度前已液化（分子本身有體積）[1]'] },
+          { q: '求在相同壓強下，空氣在 150 °C 時的體積。', answer: 'V ∝ T（以開爾文為單位）：V = 29.3 × (150 + 273) / (20 + 273) = 29.3 × 423 / 293 = 42.3 cm³。', points: ['V / T 不變，T 以開爾文為單位 [1M]', '42.3 cm³ [1A]'] }
+        ]
+      }
+    },
+    {
+      id: 'SH13', topic: 'heat', level: 5, sub: 'Cooling curve',
+      stem: '0.50 kg of hot water in a metal can is left to cool in a room. The graph shows how its temperature θ changes with time t. (Specific heat capacity of water = 4200 J kg⁻¹ °C⁻¹; neglect the heat capacity of the can.)',
+      parts: [
+        {
+          label: '(a)', marks: 1, q: 'On the graph, draw the tangent to the curve at t = 10 min.',
+          answer: 'A straight line touching the curve at t = 10 min (θ ≈ 60 °C), with the same slope as the curve there.',
+          points: ['Tangent touching the curve at t = 10 min [1]'],
+          draw: { w: cooling.w, h: cooling.h, base: cooling.base, tools: ['line'], aria: 'Cooling curve for drawing a tangent', snap: [[cooling.X(10), cooling.Y(cool(10))]], answer: tangent }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Use your tangent to find the rate of fall of temperature at t = 10 min.',
+          answer: 'The tangent falls about 40 °C in 25 min: rate ≈ 1.6 °C min⁻¹ (accept 1.4 to 1.8 °C min⁻¹).',
+          points: ['Gradient of the tangent from a large triangle [1M]', '1.6 °C min⁻¹ (1.4 to 1.8) [1A]'], num: { v: -slope, unit: '°C min⁻¹', tol: 0.12 }
+        },
+        {
+          label: '(c)', marks: 2, q: 'Hence find the rate at which the water is losing energy at t = 10 min.',
+          answer: 'P = mc × (rate of fall) = 0.50 × 4200 × 1.6 / 60 = 56 W.',
+          points: ['P = mc × dθ/dt, with minutes changed to seconds [1M]', '56 W (follow-through from (b)) [1A]'], num: { v: 0.5 * 4200 * -slope / 60, unit: 'W', tol: 0.12 }
+        },
+        { label: '(d)', marks: 1, q: 'What is the temperature of the room?', answer: 'About 20 °C: the curve levels off at this value.', points: ['20 °C [1]'], num: { v: 20, unit: '°C', tol: 0.05 } },
+        {
+          label: '(e)', marks: 1, q: 'Explain why the water cools more and more slowly.',
+          answer: 'The rate of energy loss depends on the temperature difference between the water and the room, which gets smaller as the water cools.',
+          points: ['Temperature difference with the surroundings decreases [1]']
+        }
+      ],
+      zh: {
+        sub: '冷卻曲線',
+        stem: '把 0.50 kg 的熱水放在金屬罐中，在室內冷卻。下圖顯示其溫度 θ 隨時間 t 的變化。（水的比熱容量 = 4200 J kg⁻¹ °C⁻¹；忽略罐的熱容量。）',
+        parts: [
+          { q: '在線圖上畫出曲線在 t = 10 min 處的切線。', answer: '一條在 t = 10 min（θ ≈ 60 °C）處與曲線相切的直線，斜率與曲線在該處相同。', points: ['在 t = 10 min 處與曲線相切 [1]'] },
+          { q: '利用你的切線，求在 t = 10 min 時溫度的下降率。', answer: '切線在 25 min 內下降約 40 °C：下降率 ≈ 1.6 °C min⁻¹（接受 1.4 至 1.8 °C min⁻¹）。', points: ['用大三角形求切線的斜率 [1M]', '1.6 °C min⁻¹（1.4 至 1.8）[1A]'] },
+          { q: '由此求水在 t = 10 min 時散失能量的速率。', answer: 'P = mc × （溫度下降率）= 0.50 × 4200 × 1.6 / 60 = 56 W。', points: ['P = mc × dθ/dt，並把分鐘轉換為秒 [1M]', '56 W（按 (b) 的答案計算）[1A]'] },
+          { q: '房間的溫度是多少？', answer: '約 20 °C：曲線趨於這個數值。', points: ['20 °C [1]'] },
+          { q: '解釋為甚麼水冷卻得愈來愈慢。', answer: '散失能量的速率取決於水與房間的溫度差，而水冷卻時這溫度差愈來愈小。', points: ['與周圍環境的溫度差減小 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

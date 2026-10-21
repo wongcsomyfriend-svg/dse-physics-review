@@ -253,3 +253,163 @@ addStructured([
     }
   ]);
 })();
+
+/* Batch 3: an experiment question (kind: 'exp') and questions with drawing parts. */
+(function () {
+  const { svg, line, box, arrow, text, dot, circ } = window.draw;
+  const cross = (f, x, y) => `<path d="M${f.X(x) - 5} ${f.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`;
+  const meter = (x, y, t) => circ(x, y, 11) + text(x, y + 4, t, { size: 12, bold: true });
+  const charge = (x, y, s) => circ(x, y, 12) + text(x, y + 5, s, { size: 15, bold: true });
+  // Field of +Q and −Q
+  const dipoleBase = charge(120, 110, '+') + charge(260, 110, '−');
+  const dipoleAnswer = line('M132 110 H248', 2) + arrow(185, 110, 197, 110, 2) +
+    [[60, 1], [110, 1], [60, -1], [110, -1]].map(([h, s]) => `<path d="M128 ${110 - s * 8} Q190 ${110 - s * h} 252 ${110 - s * 8}" fill="none" stroke="currentColor" stroke-width="2"/>` + arrow(184, 110 - s * h / 2 - s * 0.5 * 0, 196, 110 - s * h / 2, 2)).join('') +
+    line('M108 110 H40 M272 110 H340', 2) + arrow(70, 110, 58, 110, 2) + arrow(310, 110, 298, 110, 2);
+  // Parallel plates: + on top, − below
+  const platesBase = line('M80 50 H300', 4) + line('M80 170 H300', 4) + text(70, 55, '+', { size: 15, anchor: 'end' }) + text(70, 175, '−', { size: 15, anchor: 'end' });
+  const platesAnswer = [110, 150, 190, 230, 270].map(x => line(`M${x} 54 V166`, 2) + arrow(x, 104, x, 116, 2)).join('') +
+    '<path d="M84 54 Q66 110 84 166 M296 54 Q314 110 296 166" fill="none" stroke="currentColor" stroke-width="1.6"/>';
+  // e.m.f. and internal resistance: V = 1.50 − 0.80 I
+  const parts = circ(190, 20, 11) + text(190, 24, 'V', { size: 12, bold: true }) + line('M185 48 V72', 2) + line('M195 54 V66', 4) + line('M150 60 H185 M195 60 H230', 2) +
+    meter(320, 110, 'A') + box(160, 143, 60, 14) + line('M165 170 L215 130', 1.5) + text(190, 190, 'rheostat', { size: 11 }) +
+    [[150, 60], [230, 60], [160, 150], [220, 150], [320, 99], [320, 121], [179, 20], [201, 20]].map(([x, y]) => dot(x, y, 2.5)).join('');
+  const circuitAnswer = line('M150 60 H60 V150 H160 M220 150 H320 V121 M320 99 V60 H230 M150 60 V20 H179 M201 20 H230 V60', 2);
+  const vi = graphFrame({
+    aria: 'Empty grid for plotting terminal voltage against current', w: 400, h: 240,
+    x: { max: 0.6, label: 'I / A', ticks: [0.1, 0.2, 0.3, 0.4, 0.5].map(v => [v, v.toFixed(1)]) },
+    y: { max: 1.6, label: 'V / V', ticks: [0.4, 0.8, 1.2, 1.6].map(v => [v, v.toFixed(1)]) },
+    grid: { x: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55], y: [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6] }
+  });
+  const Is = [0.1, 0.2, 0.3, 0.4, 0.5], Vs = Is.map(I => 1.5 - 0.8 * I);
+  const viAnswer = Is.map((I, k) => cross(vi, I, Vs[k])).join('') + vi.path([[0, 1.5], [0.55, 1.5 - 0.8 * 0.55]]);
+  // Motor coil seen end-on: side P (left, current into page), side Q (right, current out of page); field left to right.
+  const coilBase = line('M20 30 H60 V190 H20 M360 30 H320 V190 H360', 2) + text(40, 115, 'N', { size: 15, bold: true }) + text(340, 115, 'S', { size: 15, bold: true }) +
+    [50, 170].map(y => arrow(70, y, 310, y, 1)).join('') + line('M130 110 H250', 1.2, true) + dot(190, 110, 3) +
+    circ(130, 110, 10) + line('M123 103 L137 117 M137 103 L123 117', 1.8) + circ(250, 110, 10) + dot(250, 110, 3) +
+    text(130, 92, 'P', { size: 13, bold: true }) + text(250, 92, 'Q', { size: 13, bold: true });
+  const coilAnswer = arrow(130, 122, 130, 165, 2.5) + text(138, 160, 'F', { anchor: 'start' }) + arrow(250, 98, 250, 55, 2.5) + text(258, 62, 'F', { anchor: 'start' });
+  addStructured([
+    {
+      id: 'SE11', topic: 'elec', level: 3, sub: 'Electric fields',
+      stem: 'This question is about electric field patterns.',
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'Two point charges +Q and −Q are fixed near each other. Draw the electric field pattern around them, with directions.',
+          answer: 'Field lines start on +Q and end on −Q, curving round between them, with arrows pointing from + to −. The lines are closest together between the charges.',
+          points: ['Lines start on +Q and end on −Q, curving between them [1]', 'Arrows from + towards − [1]'],
+          draw: { w: 380, h: 220, base: dipoleBase, tools: ['pen', 'arrow'], aria: 'A positive and a negative charge', answer: dipoleAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Two parallel metal plates are connected to a d.c. supply; the upper plate is positive. Draw the electric field pattern between the plates.',
+          answer: 'Parallel, evenly spaced straight lines between the plates (a uniform field), with arrows from the positive plate to the negative plate; the lines curve outwards slightly at the edges.',
+          points: ['Parallel, evenly spaced lines between the plates [1]', 'Arrows from + to −, with some curving at the edges [1]'],
+          draw: { w: 380, h: 220, base: platesBase, tools: ['line', 'arrow', 'pen'], aria: 'Two parallel plates', answer: platesAnswer }
+        },
+        {
+          label: '(c)', marks: 1, q: 'The plates are 4.0 cm apart and the p.d. between them is 600 V. Find the electric field strength between the plates.',
+          answer: 'E = V / d = 600 / 0.040 = 1.5 × 10⁴ V m⁻¹.', points: ['1.5 × 10⁴ V m⁻¹ [1]'], num: { v: 1.5e4, unit: 'V m⁻¹' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Find the size and direction of the electric force on an electron between the plates. (Charge of electron = 1.60 × 10⁻¹⁹ C)',
+          answer: 'F = eE = 1.60 × 10⁻¹⁹ × 1.5 × 10⁴ = 2.4 × 10⁻¹⁵ N, towards the positive (upper) plate.',
+          points: ['2.4 × 10⁻¹⁵ N [1]', 'Towards the positive plate [1]'], num: { v: 2.4e-15, unit: 'N' }
+        }
+      ],
+      zh: {
+        sub: '電場',
+        stem: '本題有關電場圖樣。',
+        parts: [
+          { q: '兩個點電荷 +Q 和 −Q 固定在彼此附近。畫出它們周圍的電場圖樣，並標示方向。', answer: '電場線由 +Q 出發，終止於 −Q，在兩者之間彎曲，箭號由 + 指向 −。兩電荷之間的電場線最密。', points: ['電場線由 +Q 出發、終止於 −Q，在兩者之間彎曲 [1]', '箭號由 + 指向 − [1]'] },
+          { q: '兩塊平行金屬板接上直流電源；上板帶正電。畫出兩板之間的電場圖樣。', answer: '兩板之間是平行而間距均勻的直線（均勻電場），箭號由正板指向負板；在邊緣處電場線稍為向外彎曲。', points: ['兩板之間平行而間距均勻的直線 [1]', '箭號由 + 指向 −，邊緣處稍為彎曲 [1]'] },
+          { q: '兩板相距 4.0 cm，兩板之間的電勢差為 600 V。求兩板之間的電場強度。', answer: 'E = V / d = 600 / 0.040 = 1.5 × 10⁴ V m⁻¹。', points: ['1.5 × 10⁴ V m⁻¹ [1]'] },
+          { q: '求兩板之間一粒電子所受電力的大小和方向。（電子電荷 = 1.60 × 10⁻¹⁹ C）', answer: 'F = eE = 1.60 × 10⁻¹⁹ × 1.5 × 10⁴ = 2.4 × 10⁻¹⁵ N，指向正（上）板。', points: ['2.4 × 10⁻¹⁵ N [1]', '指向正板 [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SE12', topic: 'elec', level: 4, kind: 'exp', sub: 'Experiment: e.m.f. and internal resistance',
+      stem: 'You are given a cell, a voltmeter, an ammeter, a rheostat (variable resistor), a switch and connecting wires. You are asked to find the e.m.f. ε and the internal resistance r of the cell.',
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the diagram, join the components with wires to make a suitable circuit.',
+          answer: 'The cell, the ammeter and the rheostat are connected in series in one loop. The voltmeter is connected directly across the terminals of the cell.',
+          points: ['Ammeter in series with the rheostat and the cell [1]', 'Voltmeter connected across the cell terminals [1]'],
+          draw: { w: 380, h: 200, base: parts, tools: ['line'], aria: 'Circuit components to be joined: a cell, a voltmeter, an ammeter and a rheostat', snap: [[150, 60], [230, 60], [160, 150], [220, 150], [320, 99], [320, 121], [179, 20], [201, 20], [60, 60], [60, 150], [320, 60], [320, 150], [150, 20], [230, 20]], answer: circuitAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Describe how you would take your readings.',
+          answer: 'Adjust the rheostat to give different currents and record the ammeter reading I and the voltmeter reading V each time, taking at least five sets. Keep the currents small and switch off between readings, so the cell does not run down or heat up.',
+          points: ['Vary the rheostat and record pairs of V and I (at least five sets) [1]', 'Keep currents small / switch off between readings [1]']
+        },
+        {
+          label: '(c)', marks: 1, q: 'Explain how a graph of V against I gives ε and r.',
+          answer: 'V = ε − Ir, so V against I is a straight line: the intercept on the V-axis (I = 0) is ε, and the gradient is −r.',
+          points: ['V = ε − Ir: intercept = ε, gradient = −r [1]']
+        },
+        {
+          label: '(d)', marks: 3, q: 'These results were obtained:<br><table class="dtable"><tr><th>I / A</th>' + Is.map(I => `<td>${I.toFixed(2)}</td>`).join('') + '</tr><tr><th>V / V</th>' + Vs.map(V => `<td>${V.toFixed(2)}</td>`).join('') + '</tr></table>Plot V against I and draw the best-fit line, extended to I = 0.',
+          answer: 'The points lie on a straight line falling 0.08 V for every 0.10 A; extended to I = 0 it meets the V-axis at 1.50 V.',
+          points: ['Points plotted correctly [1]', 'Straight best-fit line [1]', 'Line extended to I = 0 [1]'],
+          draw: { w: vi.w, h: vi.h, base: vi.base, tools: ['line', 'pen'], aria: 'Grid for plotting V against I', answer: viAnswer }
+        },
+        { label: '(e)', marks: 1, q: 'Use your graph to find the e.m.f. of the cell.', answer: 'Intercept on the V-axis: ε = 1.50 V.', points: ['1.50 V [1]'], num: { v: 1.5, unit: 'V' } },
+        {
+          label: '(f)', marks: 2, q: 'Use your graph to find the internal resistance of the cell.',
+          answer: 'Gradient = (1.10 − 1.42) / (0.50 − 0.10) = −0.80 V A⁻¹, so r = 0.80 Ω.',
+          points: ['r = −gradient [1M]', '0.80 Ω [1A]'], num: { v: 0.8, unit: 'Ω', tol: 0.04 }
+        }
+      ],
+      zh: {
+        sub: '實驗：電動勢和內阻',
+        stem: '你獲提供一個電池、一個伏特計、一個安培計、一個變阻器、一個開關和連接導線。你需要求電池的電動勢 ε 和內阻 r。',
+        parts: [
+          { q: '在圖上用導線連接各元件，組成合適的電路。', answer: '電池、安培計和變阻器串聯成一個迴路。伏特計直接接在電池的兩極之間。', points: ['安培計與變阻器和電池串聯 [1]', '伏特計接在電池兩極之間 [1]'] },
+          { q: '描述你會怎樣取得讀數。', answer: '調節變阻器以得到不同的電流，每次記錄安培計讀數 I 和伏特計讀數 V，至少取五組。保持電流細小，並在讀數之間關掉開關，使電池不會耗盡或變熱。', points: ['調節變阻器並記錄 V 和 I（至少五組）[1]', '保持電流細小／讀數之間關掉開關 [1]'] },
+          { q: '解釋 V 對 I 的線圖怎樣給出 ε 和 r。', answer: 'V = ε − Ir，所以 V 對 I 是一條直線：V 軸上的截距（I = 0）是 ε，斜率是 −r。', points: ['V = ε − Ir：截距 = ε，斜率 = −r [1]'] },
+          { q: '得到以下結果：<br><table class="dtable"><tr><th>I / A</th>' + Is.map(I => `<td>${I.toFixed(2)}</td>`).join('') + '</tr><tr><th>V / V</th>' + Vs.map(V => `<td>${V.toFixed(2)}</td>`).join('') + '</tr></table>描繪 V 對 I 的關係，畫出最佳擬合線並延長至 I = 0。', answer: '各點在一條直線上，每 0.10 A 下降 0.08 V；延長至 I = 0 時與 V 軸相交於 1.50 V。', points: ['各點描繪正確 [1]', '最佳擬合直線 [1]', '把直線延長至 I = 0 [1]'] },
+          { q: '利用線圖求電池的電動勢。', answer: 'V 軸上的截距：ε = 1.50 V。', points: ['1.50 V [1]'] },
+          { q: '利用線圖求電池的內阻。', answer: '斜率 = (1.10 − 1.42) / (0.50 − 0.10) = −0.80 V A⁻¹，所以 r = 0.80 Ω。', points: ['r = −斜率 [1M]', '0.80 Ω [1A]'] }
+        ]
+      }
+    },
+    {
+      id: 'SE13', topic: 'elec', level: 4, sub: 'Motor effect',
+      stem: 'The diagram shows the coil of a simple d.c. motor seen end-on, with its plane parallel to the magnetic field. In side P the current flows into the page; in side Q it flows out of the page. The coil has 50 turns; each side is 5.0 cm long in the field, and P and Q are 4.0 cm apart. The current is 2.0 A and the field is 0.20 T.',
+      figure: svg(380, 220, 'A motor coil seen end-on between magnetic poles: side P carries current into the page and side Q carries current out of the page', coilBase),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the diagram, draw arrows to show the magnetic forces on sides P and Q.',
+          answer: 'By Fleming\'s left-hand rule (field to the right): the force on P is downwards and the force on Q is upwards, equal in size.',
+          points: ['Force on P downwards [1]', 'Force on Q upwards, equal and opposite [1]'],
+          draw: { w: 380, h: 220, base: coilBase, tools: ['arrow'], aria: 'Motor coil for drawing the forces', snap: [[130, 110], [250, 110]], answer: coilAnswer }
+        },
+        { label: '(b)', marks: 1, q: 'In which direction does the coil start to turn, as seen in the diagram?', answer: 'Anticlockwise (P moves down, Q moves up).', points: ['Anticlockwise [1]'] },
+        {
+          label: '(c)', marks: 2, q: 'Find the size of the force on side P.',
+          answer: 'F = NBIL = 50 × 0.20 × 2.0 × 0.050 = 1.0 N.', points: ['F = NBIL [1M]', '1.0 N [1A]'], num: { v: 1.0, unit: 'N' }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Find the torque on the coil in this position.',
+          answer: 'The two forces form a couple: torque = F × (perpendicular distance between them) = 1.0 × 0.040 = 0.040 N m.',
+          points: ['Torque = F × separation of the forces [1M]', '0.040 N m [1A]'], num: { v: 0.04, unit: 'N m' }
+        },
+        {
+          label: '(e)', marks: 1, q: 'What is the purpose of the commutator in the motor?',
+          answer: 'It reverses the current in the coil every half turn, so that the torque keeps turning the coil in the same direction.',
+          points: ['Reverses the current every half turn so the coil keeps turning the same way [1]']
+        }
+      ],
+      zh: {
+        sub: '電動機效應',
+        stem: '圖中顯示從一端看一個簡單直流電動機的線圈，線圈平面與磁場平行。在 P 邊電流流入紙面；在 Q 邊電流流出紙面。線圈有 50 匝；每邊在磁場中的長度為 5.0 cm，P 和 Q 相距 4.0 cm。電流為 2.0 A，磁場為 0.20 T。',
+        parts: [
+          { q: '在圖上畫出箭號，表示作用於 P 邊和 Q 邊的磁力。', answer: '根據弗林明左手定則（磁場向右）：P 所受的力向下，Q 所受的力向上，大小相等。', points: ['P 所受的力向下 [1]', 'Q 所受的力向上，大小相等、方向相反 [1]'] },
+          { q: '從圖中看，線圈開始時向哪個方向轉動？', answer: '逆時針（P 向下移，Q 向上移）。', points: ['逆時針 [1]'] },
+          { q: '求作用於 P 邊的力的大小。', answer: 'F = NBIL = 50 × 0.20 × 2.0 × 0.050 = 1.0 N。', points: ['F = NBIL [1M]', '1.0 N [1A]'] },
+          { q: '求線圈在這位置所受的轉矩。', answer: '兩個力組成力偶：轉矩 = F ×（兩力之間的垂直距離）= 1.0 × 0.040 = 0.040 N m。', points: ['轉矩 = F × 兩力之間的距離 [1M]', '0.040 N m [1A]'] },
+          { q: '電動機中換向器的作用是甚麼？', answer: '它每半轉把線圈中的電流反向一次，使轉矩一直使線圈沿同一方向轉動。', points: ['每半轉把電流反向，使線圈持續沿同一方向轉動 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

@@ -4,6 +4,7 @@ A static revision site for HKDSE Physics students:
 
 - **Topic practice**: choose topics and HKDSE levels, then answer Paper 1 Section A style MC questions, with a worked solution after each one.
 - **Structured questions**: Paper 1 Section B style questions in several parts. Type your working for each part, then reveal the suggested answer and tick the marking points you earned. Numerical final answers are checked automatically (within 2 %). Most structured questions have a figure.
+- **Experiment questions** (tagged 實驗題 / Experiment): given a list of apparatus, describe how to measure a quantity, then process real-looking data: plot a graph, find a gradient or intercept, and suggest precautions. Every marking point states its own mark ([1], [1M] or [1A]).
 - **Drawing on diagrams**: some parts ask you to draw on the figure, such as ray diagrams, the path of a charged particle, forces, field lines or a sketch graph. Use the Ray, Line, Arrow and Freehand tools; line ends snap to key points such as the foci. When you show the marking scheme, the model drawing is overlaid in green for you to compare before ticking the marking points.
 - **Mixed practice**: MC and structured questions in one session, about one structured question after every three MC.
 - **Questions with figures**: about 70 % of the MC questions come with a graph or diagram, as in the HKDSE paper. These include motion and decay graphs, circuits, ray diagrams, field patterns and experimental set-ups. Some questions can only be answered by reading the graph. All figures are drawn in SVG (no photos), so they stay sharp, follow the light and dark themes, and have their words translated in the Chinese version.
@@ -17,7 +18,7 @@ Progress is saved in the browser's `localStorage`. You can export or import it f
 
 ## The question bank
 
-The bank has 1257 MC questions (about 250 per topic, 879 of them with a figure) and 50 structured questions (10 per topic, 47 of them with a figure or drawing part), in these files:
+The bank has 1257 MC questions (about 250 per topic, 879 of them with a figure) and 65 structured questions (13 per topic, 62 of them with a figure or drawing part, 5 of them experiment questions), in these files:
 
 | File | What it holds |
 |---|---|
@@ -27,7 +28,7 @@ The bank has 1257 MC questions (about 250 per topic, 879 of them with a figure) 
 | `bank/hfig.js` | Figures for 194 of the hand-written questions above, attached by question id. |
 | `bank/templates.js` + `bank/tfig.js` | 50 number-variant templates, 10 per topic, giving 500 questions. Each template computes the answer, the wrong options (from common mistakes) and the worked solution, in both languages. `tfig.js` draws a figure for each variant from its own numbers (44 of the 50 families). |
 | `bank/tgraph.js` | 15 graph-reading template families (3 per topic, 150 questions). The data must be read from each variant's graph: heating curves, v–t, F–x and F–t graphs, wave graphs, I–V and V–I graphs, CRO traces and decay curves. |
-| `bank/sq-heat.js`, `sq-force.js`, `sq-wave.js`, `sq-elec.js`, `sq-nuc.js` | Structured questions, 10 per topic (Lv 3 to Lv 5/5**), each with 3–5 parts and a marking scheme. |
+| `bank/sq-heat.js`, `sq-force.js`, `sq-wave.js`, `sq-elec.js`, `sq-nuc.js` | Structured questions, 13 per topic (Lv 3 to Lv 5/5**), each with 3–6 parts and a marking scheme. |
 | `bank/sqfig.js` | Figures for structured questions whose text describes a set-up, attached by question id. |
 
 `bank/core.js` holds `addBank()`, `addStructured()`, the graph helpers and the `template()` engine. Variants of one template share a `family` (e.g. `TH02`), and practice and mock papers use at most one variant per family before repeating.
@@ -49,6 +50,8 @@ Put the Chinese version in a `zh` field: `sub`, `stem`, `explain`, and `statemen
 ```
 
 `num` is the expected numerical final answer. The app checks the last number the student types against it, within `tol` (relative, default 0.02). Write marking points in the HKDSE style, ending with `[1M]` for a method mark or `[1A]` for an answer mark.
+
+**An experiment question:** add `kind: 'exp'` to the question so that it is tagged as an experiment.
 
 **A drawing part:** add `draw: { w, h, base, answer, tools?, snap?, aria? }` to a part. `base` (what the student draws on) and `answer` (the model drawing) are SVG markup without the outer `<svg>`, in a `w` × `h` viewBox, drawn in `currentColor`. `tools` is any of `ray`, `line`, `arrow` and `pen` (the first is selected at the start), and `snap` lists points that line ends snap to. For graphs, `graphFrame()` in `bank/core.js` gives the axes as `base` plus `X`, `Y` and `path()` for drawing the model answer in data units. See SW09 (lens ray diagram) or SE09 (electron in a magnetic field) for examples.
 

@@ -243,3 +243,135 @@ addStructured([
     }
   ]);
 })();
+
+/* Batch 3: an experiment question (kind: 'exp') and questions with drawing parts. */
+(function () {
+  const { svg, line, box, arrow, text, dot, range } = window.draw;
+  const H = window.HFIG || {};
+  const cross = (f, x, y) => `<path d="M${f.X(x) - 5} ${f.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`;
+  // Chart of neutron number N against proton number Z
+  const nz = graphFrame({
+    aria: 'Grid of neutron number N against proton number Z with uranium-238 marked at Z = 92, N = 146', w: 400, h: 260,
+    x: { min: 87, max: 94, label: 'Z', ticks: [88, 89, 90, 91, 92, 93].map(v => [v, String(v)]) },
+    y: { min: 139, max: 148, label: 'N', ticks: [140, 141, 142, 143, 144, 145, 146, 147].map(v => [v, String(v)]) },
+    grid: { x: [88, 89, 90, 91, 92, 93], y: [140, 141, 142, 143, 144, 145, 146, 147] }, dots: [[92, 146, '²³⁸U', 0, -10]]
+  });
+  const chain = [[92, 146], [90, 144], [91, 143], [92, 142]];
+  const nzArrow = (a, b) => arrow(nz.X(a[0]), nz.Y(a[1]), nz.X(b[0]), nz.Y(b[1]), 2.2);
+  const nzAnswer = nzArrow(chain[0], chain[1]) + nzArrow(chain[1], chain[2]) + nzArrow(chain[2], chain[3]) +
+    chain.slice(1).map(([z, n]) => `<circle cx="${nz.X(z)}" cy="${nz.Y(n)}" r="4" fill="currentColor"/>`).join('') +
+    text(nz.X(90) - 6, nz.Y(144) + 4, 'Th', { size: 11, anchor: 'end' }) + text(nz.X(91) + 6, nz.Y(143) + 4, 'Pa', { size: 11, anchor: 'start' }) + text(nz.X(92) + 6, nz.Y(142) + 4, '²³⁴U', { size: 11, anchor: 'start' });
+  // Inverse-square law: C = 9.0 × 10⁴ / d² (d in cm)
+  const ds = [10, 15, 20, 25, 30], Cs = ds.map(d => 9e4 / (d * d));
+  const inv = graphFrame({
+    aria: 'Empty grid for plotting corrected count rate against 1/d squared', w: 400, h: 240,
+    x: { max: 0.0112, label: '1/d² / cm⁻²', ticks: [0.002, 0.004, 0.006, 0.008, 0.010].map(v => [v, v.toFixed(3)]) },
+    y: { max: 1000, label: 'C / min⁻¹', ticks: [200, 400, 600, 800, 1000].map(v => [v, String(v)]) },
+    grid: { x: [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.010, 0.011], y: [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] }
+  });
+  const invAnswer = ds.map((d, k) => cross(inv, 1 / (d * d), Cs[k])).join('') + inv.path([[0, 0], [0.011, 990]]);
+  addStructured([
+    {
+      id: 'SN11', topic: 'nuc', level: 3, sub: 'Radioactive decay',
+      stem: 'Uranium-238 (²³⁸₉₂U) decays by emitting an α particle to form thorium (Th). The thorium then emits a β⁻ particle to form protactinium (Pa), which emits another β⁻ particle to form uranium-234. The grid shows the neutron number N against the proton number Z.',
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'On the grid, draw arrows to show the three decays, starting from uranium-238.',
+          answer: 'α decay: Z falls by 2 and N by 2, from (92, 146) to (90, 144). Each β⁻ decay: Z rises by 1 and N falls by 1, to (91, 143) and then to (92, 142).',
+          points: ['α decay to Z = 90, N = 144 [1]', 'β⁻ decay to Z = 91, N = 143 [1]', 'Second β⁻ decay to Z = 92, N = 142 [1]'],
+          draw: { w: nz.w, h: nz.h, base: nz.base, tools: ['arrow', 'line'], aria: 'N–Z grid for drawing the decays', snap: [88, 89, 90, 91, 92, 93].flatMap(z => range(140, 147, 7).map(n => [nz.X(z), nz.Y(n)])), answer: nzAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Write the nuclear equation for the α decay.',
+          answer: '²³⁸₉₂U → ²³⁴₉₀Th + ⁴₂He', points: ['Correct products ²³⁴Th and ⁴He [1]', 'Nucleon and proton numbers balanced [1]']
+        },
+        { label: '(c)', marks: 1, q: 'Uranium-234 and uranium-238 are isotopes. What does this mean?', answer: 'They have the same number of protons (92) but different numbers of neutrons (142 and 146).', points: ['Same proton number, different neutron number [1]'] },
+        { label: '(d)', marks: 1, q: 'What change happens inside a nucleus when it emits a β⁻ particle?', answer: 'A neutron changes into a proton and an electron; the electron is emitted as the β⁻ particle.', points: ['A neutron changes into a proton (and an electron) [1]'] }
+      ],
+      zh: {
+        sub: '放射衰變',
+        stem: '鈾-238（²³⁸₉₂U）放出一粒 α 粒子衰變成釷（Th）。釷隨後放出一粒 β⁻ 粒子變成鏷（Pa），鏷再放出一粒 β⁻ 粒子變成鈾-234。方格顯示中子數 N 對質子數 Z 的關係。',
+        parts: [
+          { q: '在方格上由鈾-238 開始畫出箭號，表示這三次衰變。', answer: 'α 衰變：Z 減 2、N 減 2，由 (92, 146) 至 (90, 144)。每次 β⁻ 衰變：Z 加 1、N 減 1，先至 (91, 143)，再至 (92, 142)。', points: ['α 衰變至 Z = 90、N = 144 [1]', 'β⁻ 衰變至 Z = 91、N = 143 [1]', '第二次 β⁻ 衰變至 Z = 92、N = 142 [1]'] },
+          { q: '寫出 α 衰變的核方程。', answer: '²³⁸₉₂U → ²³⁴₉₀Th + ⁴₂He', points: ['生成物 ²³⁴Th 和 ⁴He 正確 [1]', '核子數和質子數平衡 [1]'] },
+          { q: '鈾-234 和鈾-238 是同位素。這是甚麼意思？', answer: '它們的質子數相同（92），但中子數不同（142 和 146）。', points: ['質子數相同，中子數不同 [1]'] },
+          { q: '原子核放出 β⁻ 粒子時，核內發生甚麼變化？', answer: '一粒中子變成一粒質子和一粒電子；電子以 β⁻ 粒子的形式放出。', points: ['一粒中子變成一粒質子（和一粒電子）[1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SN12', topic: 'nuc', level: 4, kind: 'exp', sub: 'Experiment: half-life',
+      stem: 'You are given a GM tube connected to a counter, a stop-watch, a pair of tongs and a sealed radioactive source whose half-life is a few minutes. You are asked to measure the half-life of the source.',
+      figure: H.N81 || '',
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'How would you find the background count rate?',
+          answer: 'With the source removed (kept far away in its lead box), record the counts over a long time, e.g. 5 minutes, and divide to get the count rate per minute.',
+          points: ['Measure the counts with the source removed / far away [1]', 'Over a long time (several minutes), giving a rate per minute [1]']
+        },
+        {
+          label: '(b)', marks: 3, q: 'Describe how you would then take your measurements and find the half-life.',
+          answer: 'Place the source at a fixed distance in front of the GM tube. Record the counts in equal intervals (e.g. every 30 s) for several half-lives. Subtract the background from each count rate, plot the corrected count rate against time, and read off the time for the rate to halve; repeat from several starting points and take the average.',
+          points: ['Source and GM tube kept at a fixed distance [1]', 'Counts recorded in equal time intervals over several half-lives [1]', 'Background subtracted; corrected rate plotted against time and the halving time read (averaged) [1]']
+        },
+        {
+          label: '(c)', marks: 2, q: 'State two safety precautions you would take when handling the source.',
+          answer: 'Any two: handle it with tongs, never with the hands; keep it pointed away from the body; keep the time the source is out of its lead box short; return it to the lead box straight after use; wash hands afterwards.',
+          points: ['First correct precaution [1]', 'Second correct precaution [1]']
+        },
+        {
+          label: '(d)', marks: 2, q: 'The corrected count rate falls from 520 to 65 counts per minute in 6.0 minutes. Find the half-life.',
+          answer: '520 → 260 → 130 → 65 is three halvings, so 3 half-lives = 6.0 min and the half-life = 2.0 min.',
+          points: ['520 to 65 is three half-lives [1M]', '2.0 min [1A]'], num: { v: 2.0, unit: 'min' }
+        },
+        {
+          label: '(e)', marks: 1, q: 'Why do the count rates not fall smoothly but scatter about a curve?',
+          answer: 'Radioactive decay is random, so the number of decays in each interval fluctuates.', points: ['Radioactive decay is random [1]']
+        }
+      ],
+      zh: {
+        sub: '實驗：半衰期',
+        stem: '你獲提供一個連接計數器的 GM 管、一個秒錶、一把鉗子和一個半衰期為數分鐘的密封放射源。你需要量度放射源的半衰期。',
+        parts: [
+          { q: '你會怎樣求本底計數率？', answer: '移走放射源（放在遠處的鉛盒內），記錄一段較長時間（例如 5 分鐘）內的計數，再除以時間得出每分鐘的計數率。', points: ['移走放射源／放在遠處時量度計數 [1]', '量度一段較長時間（數分鐘），得出每分鐘的計數率 [1]'] },
+          { q: '描述你之後會怎樣量度並求出半衰期。', answer: '把放射源放在 GM 管前一個固定距離處。在數個半衰期內，每隔相等的時間（例如每 30 s）記錄計數。把每個計數率減去本底，描繪經校正的計數率對時間的線圖，讀出計數率減半所需的時間；從數個不同起點重複並取平均值。', points: ['放射源與 GM 管保持固定距離 [1]', '在數個半衰期內每隔相等時間記錄計數 [1]', '減去本底，描繪經校正的計數率對時間的線圖並讀出減半時間（取平均）[1]'] },
+          { q: '指出處理放射源時你會採取的兩項安全措施。', answer: '任何兩項：用鉗子處理，切勿用手；放射源不要指向身體；盡量縮短放射源離開鉛盒的時間；使用後立即放回鉛盒；事後洗手。', points: ['第一項正確的措施 [1]', '第二項正確的措施 [1]'] },
+          { q: '經校正的計數率在 6.0 分鐘內由每分鐘 520 次降至 65 次。求半衰期。', answer: '520 → 260 → 130 → 65 是減半三次，所以 3 個半衰期 = 6.0 min，半衰期 = 2.0 min。', points: ['由 520 至 65 是三個半衰期 [1M]', '2.0 min [1A]'] },
+          { q: '為甚麼計數率不是平滑地下降，而是分散在一條曲線附近？', answer: '放射衰變是隨機的，所以每段時間內的衰變數目會起伏。', points: ['放射衰變是隨機的 [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SN13', topic: 'nuc', level: 4, sub: 'Inverse-square law',
+      stem: 'A small γ source is placed at different distances d from a GM tube. The corrected count rate C is recorded:<br><table class="dtable"><tr><th>d / cm</th>' + ds.map(d => `<td>${d}</td>`).join('') + '</tr><tr><th>C / min⁻¹</th>' + Cs.map(C => `<td>${Math.round(C)}</td>`).join('') + '</tr></table>',
+      figure: H.N81 || '',
+      parts: [
+        { label: '(a)', marks: 1, q: 'Calculate 1/d² for each distance.', answer: '1/d² = 0.0100, 0.00444, 0.00250, 0.00160 and 0.00111 cm⁻².', points: ['All five values correct [1]'] },
+        {
+          label: '(b)', marks: 3, q: 'On the grid, plot C against 1/d² and draw the best-fit line.',
+          answer: 'The five points lie on a straight line through the origin.',
+          points: ['Points plotted correctly [1]', 'Straight best-fit line [1]', 'Line passes through the origin [1]'],
+          draw: { w: inv.w, h: inv.h, base: inv.base, tools: ['line', 'pen'], aria: 'Grid for plotting C against 1/d squared', answer: invAnswer }
+        },
+        { label: '(c)', marks: 1, q: 'What does the graph show?', answer: 'C is directly proportional to 1/d²: the γ radiation obeys the inverse-square law (it is not absorbed by the air).', points: ['C ∝ 1/d² (inverse-square law) [1]'] },
+        {
+          label: '(d)', marks: 2, q: 'Predict the corrected count rate at d = 40 cm.',
+          answer: 'C d² is constant = 900 × 10² = 9.0 × 10⁴. At 40 cm: C = 9.0 × 10⁴ / 40² = 56 min⁻¹.',
+          points: ['C d² constant (or reads gradient) [1M]', '56 min⁻¹ [1A]'], num: { v: 56.25, unit: 'min⁻¹', tol: 0.03 }
+        },
+        { label: '(e)', marks: 1, q: 'Why could this method not be used to study α particles?', answer: 'α particles are absorbed by a few centimetres of air, so the count rate would fall far faster than the inverse-square law.', points: ['α absorbed by a few cm of air [1]'] }
+      ],
+      zh: {
+        sub: '平方反比定律',
+        stem: '把一個細小的 γ 放射源放在與 GM 管相距 d 的不同位置，記錄經校正的計數率 C：<br><table class="dtable"><tr><th>d / cm</th>' + ds.map(d => `<td>${d}</td>`).join('') + '</tr><tr><th>C / min⁻¹</th>' + Cs.map(C => `<td>${Math.round(C)}</td>`).join('') + '</tr></table>',
+        parts: [
+          { q: '計算每個距離的 1/d²。', answer: '1/d² = 0.0100、0.00444、0.00250、0.00160 和 0.00111 cm⁻²。', points: ['五個數值都正確 [1]'] },
+          { q: '在方格上描繪 C 對 1/d² 的關係，並畫出最佳擬合線。', answer: '五點都在一條通過原點的直線上。', points: ['各點描繪正確 [1]', '最佳擬合直線 [1]', '直線通過原點 [1]'] },
+          { q: '線圖顯示甚麼？', answer: 'C 與 1/d² 成正比：γ 輻射遵守平方反比定律（不被空氣吸收）。', points: ['C ∝ 1/d²（平方反比定律）[1]'] },
+          { q: '預測 d = 40 cm 時經校正的計數率。', answer: 'C d² 不變 = 900 × 10² = 9.0 × 10⁴。在 40 cm 時：C = 9.0 × 10⁴ / 40² = 56 min⁻¹。', points: ['C d² 不變（或讀取斜率）[1M]', '56 min⁻¹ [1A]'] },
+          { q: '為甚麼這方法不能用來研究 α 粒子？', answer: 'α 粒子會被數厘米的空氣吸收，所以計數率下降得比平方反比定律快得多。', points: ['α 被數厘米的空氣吸收 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

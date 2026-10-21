@@ -395,3 +395,152 @@ addStructured([
     }
   ]);
 })();
+
+/* Batch 3: an experiment question (kind: 'exp') and questions with drawing parts. */
+(function () {
+  const { svg, line, box, arrow, text, dot, circ } = window.draw;
+  const cross = (f, x, y) => `<path d="M${f.X(x) - 5} ${f.Y(y) - 5} l10 10 m0 -10 l-10 10" stroke="currentColor" stroke-width="2"/>`;
+  const r = v => Math.round(v * 10) / 10;
+  const vt = graphFrame({
+    aria: 'Empty axes for velocity against time', w: 400, h: 230,
+    x: { max: 22, label: 't / s', ticks: [5, 10, 15, 20].map(v => [v, String(v)]) },
+    y: { max: 12, label: 'v / m s⁻¹', ticks: [2, 4, 6, 8, 10].map(v => [v, String(v)]) },
+    grid: { x: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], y: [2, 4, 6, 8, 10] }
+  });
+  // Free fall: h = 4.9 t²
+  const hs = [0.2, 0.4, 0.6, 0.8, 1.0], ts = hs.map(h => Math.sqrt(2 * h / 9.8));
+  const fall = graphFrame({
+    aria: 'Empty grid for plotting h against t squared', w: 400, h: 240,
+    x: { max: 0.23, label: 't² / s²', ticks: [0.05, 0.10, 0.15, 0.20].map(v => [v, v.toFixed(2)]) },
+    y: { max: 1.1, label: 'h / m', ticks: [0.2, 0.4, 0.6, 0.8, 1.0].map(v => [v, v.toFixed(1)]) },
+    grid: { x: [0.025, 0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.20, 0.225], y: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] }
+  });
+  const fallAnswer = hs.map((h, i) => cross(fall, ts[i] * ts[i], h)).join('') + fall.path([[0, 0], [0.22, 4.9 * 0.22]]);
+  // Banked road at 15°, rising to the right; the centre of the bend is to the left.
+  const th = 15 * Math.PI / 180, B = 300, Hh = B * Math.tan(th), P = [40 + 0.55 * B, 190 - 0.55 * Hh];
+  const n = [-Math.sin(th), -Math.cos(th)], G = [P[0] + 15 * n[0], P[1] + 15 * n[1]];
+  const bankBase = line(`M40 190 H${40 + B} V${r(190 - Hh)} Z`) + `<g transform="rotate(-15 ${r(P[0])} ${r(P[1])})">${box(P[0] - 32, P[1] - 30, 64, 30)}</g>` +
+    line('M90 190 A50 50 0 0 0 88.3 177.1', 1.2) + text(100, 184, '15°', { size: 12, anchor: 'start' }) + arrow(120, 40, 50, 40, 1.5) + text(85, 30, 'to centre', { size: 12 });
+  const bankAnswer = arrow(G[0], G[1], G[0], G[1] + 80, 2.5) + text(G[0] + 8, G[1] + 76, 'W', { anchor: 'start' }) +
+    arrow(P[0], P[1], P[0] + 90 * n[0], P[1] + 90 * n[1], 2.5) + text(P[0] + 98 * n[0] - 4, P[1] + 98 * n[1], 'R');
+  addStructured([
+    {
+      id: 'SM11', topic: 'force', level: 3, sub: 'Velocity–time graph',
+      stem: 'A car of mass 1200 kg starts from rest. It accelerates uniformly at 2.0 m s⁻² for 5.0 s, travels at constant velocity for 10 s, then decelerates uniformly to rest in 4.0 s.',
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the axes, draw the velocity–time graph of the motion.',
+          answer: 'A straight line from (0, 0) to (5.0 s, 10 m s⁻¹), a horizontal line at 10 m s⁻¹ until 15 s, then a straight line down to (19 s, 0).',
+          points: ['Straight line rising to 10 m s⁻¹ at 5.0 s [1]', 'Horizontal at 10 m s⁻¹ to 15 s, then straight down to 0 at 19 s [1]'],
+          draw: { w: vt.w, h: vt.h, base: vt.base, tools: ['line', 'pen'], aria: 'Axes for the velocity–time graph', snap: [[0, 0], [5, 10], [15, 10], [19, 0]].map(([x, y]) => [vt.X(x), vt.Y(y)]), answer: vt.path([[0, 0], [5, 10], [15, 10], [19, 0]]) }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Find the total distance travelled.',
+          answer: 'Distance = area under the graph = ½ × 5.0 × 10 + 10 × 10 + ½ × 4.0 × 10 = 25 + 100 + 20 = 145 m.',
+          points: ['Distance = area under the v–t graph [1M]', '145 m [1A]'], num: { v: 145, unit: 'm' }
+        },
+        {
+          label: '(c)', marks: 2, q: 'Find the braking force on the car during the last 4.0 s.',
+          answer: 'Deceleration = 10 / 4.0 = 2.5 m s⁻²; F = ma = 1200 × 2.5 = 3000 N.',
+          points: ['a = 2.5 m s⁻² [1M]', '3000 N [1A]'], num: { v: 3000, unit: 'N' }
+        },
+        { label: '(d)', marks: 1, q: 'Find the average speed for the whole journey.', answer: '145 / 19 = 7.6 m s⁻¹.', points: ['7.6 m s⁻¹ [1]'], num: { v: 145 / 19, unit: 'm s⁻¹' } }
+      ],
+      zh: {
+        sub: '速度－時間線圖',
+        stem: '一輛質量為 1200 kg 的汽車由靜止開始，以 2.0 m s⁻² 均勻加速 5.0 s，再以恆定速度行駛 10 s，然後在 4.0 s 內均勻減速至靜止。',
+        parts: [
+          { q: '在坐標軸上畫出運動的速度－時間線圖。', answer: '由 (0, 0) 至 (5.0 s, 10 m s⁻¹) 的直線，然後在 10 m s⁻¹ 的水平線直至 15 s，再以直線降至 (19 s, 0)。', points: ['直線上升至 5.0 s 時的 10 m s⁻¹ [1]', '在 10 m s⁻¹ 保持水平至 15 s，再以直線降至 19 s 時的 0 [1]'] },
+          { q: '求行走的總距離。', answer: '距離 = 線圖下的面積 = ½ × 5.0 × 10 + 10 × 10 + ½ × 4.0 × 10 = 25 + 100 + 20 = 145 m。', points: ['距離 = v–t 線圖下的面積 [1M]', '145 m [1A]'] },
+          { q: '求最後 4.0 s 內汽車所受的制動力。', answer: '減速度 = 10 / 4.0 = 2.5 m s⁻²；F = ma = 1200 × 2.5 = 3000 N。', points: ['a = 2.5 m s⁻² [1M]', '3000 N [1A]'] },
+          { q: '求全程的平均速率。', answer: '145 / 19 = 7.6 m s⁻¹。', points: ['7.6 m s⁻¹ [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SM12', topic: 'force', level: 4, kind: 'exp', sub: 'Experiment: acceleration due to gravity',
+      stem: 'You are given a steel ball, an electromagnet, a trapdoor switch, an electronic timer, a metre rule and a retort stand. The timer starts when the electromagnet is switched off (releasing the ball) and stops when the ball hits the trapdoor. You are asked to find the acceleration due to gravity g.',
+      figure: svg(380, 200, 'A steel ball held by an electromagnet above a trapdoor switch; both are connected to an electronic timer; h is the height fallen',
+        line('M60 190 H320', 2) + line('M80 190 V20 H170', 3) + box(150, 22, 40, 22) + circ(170, 54, 9) + line('M170 64 V150', 1, true) + line('M140 160 H200 M200 160 L215 150', 3) +
+        box(250, 80, 70, 40) + text(285, 105, '0.000 s', { size: 12 }) + line('M190 33 H285 V80 M215 155 H285 V120', 1.2) +
+        arrow(120, 105, 120, 64, 1) + arrow(120, 105, 120, 159, 1) + text(114, 110, 'h', { size: 13, anchor: 'end' })),
+      parts: [
+        {
+          label: '(a)', marks: 3, q: 'Describe how you would carry out the experiment. State the measurements you would take.',
+          answer: 'Measure the height h from the bottom of the ball to the trapdoor with the metre rule. Switch off the electromagnet to release the ball and record the fall time t. Repeat a few times for the same h and take the average. Repeat for at least five different heights (e.g. 0.20 m to 1.00 m).',
+          points: ['Measure h from the bottom of the ball to the trapdoor [1]', 'Record t for each h, repeating and taking the average [1]', 'Repeat for at least five different heights [1]']
+        },
+        {
+          label: '(b)', marks: 1, q: 'Explain why a graph of h against t² should be a straight line through the origin.',
+          answer: 'The ball starts from rest, so h = ½gt². h is directly proportional to t², with gradient g/2.',
+          points: ['h = ½gt², so h ∝ t² (gradient g/2) [1]']
+        },
+        {
+          label: '(c)', marks: 3, q: 'These results were obtained:<br><table class="dtable"><tr><th>h / m</th><td>0.20</td><td>0.40</td><td>0.60</td><td>0.80</td><td>1.00</td></tr><tr><th>t / s</th><td>0.202</td><td>0.286</td><td>0.350</td><td>0.404</td><td>0.452</td></tr></table>Calculate t² for each reading, then plot h against t² on the grid and draw the best-fit line.',
+          answer: 't² = 0.041, 0.082, 0.123, 0.163 and 0.204 s². The points lie on a straight line through the origin.',
+          points: ['t² values calculated correctly [1]', 'Points plotted correctly [1]', 'Straight best-fit line through the origin [1]'],
+          draw: { w: fall.w, h: fall.h, base: fall.base, tools: ['line', 'pen'], aria: 'Grid for plotting h against t squared', answer: fallAnswer }
+        },
+        {
+          label: '(d)', marks: 2, q: 'Use the gradient of your graph to find g.',
+          answer: 'Gradient = 1.00 / 0.204 = 4.90 m s⁻². g = 2 × gradient = 9.8 m s⁻².',
+          points: ['g = 2 × gradient [1M]', '9.8 m s⁻² (9.6 to 10.0) [1A]'], num: { v: 9.8, unit: 'm s⁻²', tol: 0.025 }
+        },
+        {
+          label: '(e)', marks: 1, q: 'Suggest one source of error in this experiment and how to reduce it.',
+          answer: 'For example: the ball is not released at once when the magnet is switched off (residual magnetism), so each t is slightly too long; use a small current in the electromagnet, or use the gradient of the graph so that a constant delay does not affect g.',
+          points: ['A valid source of error with a matching improvement [1]']
+        }
+      ],
+      zh: {
+        sub: '實驗：重力加速度',
+        stem: '你獲提供一個鋼球、一個電磁鐵、一個活門開關、一個電子計時器、一把米尺和一個鐵架。電磁鐵關掉（釋放鋼球）時計時器開始計時，鋼球撞到活門時計時器停止。你需要求重力加速度 g。',
+        parts: [
+          { q: '描述你會怎樣進行實驗。指出你會量度甚麼。', answer: '用米尺量度由鋼球底部至活門的高度 h。關掉電磁鐵釋放鋼球，記錄下落時間 t。在同一 h 重複數次並取平均值。在至少五個不同的高度重複實驗（例如 0.20 m 至 1.00 m）。', points: ['量度由鋼球底部至活門的 h [1]', '為每個 h 記錄 t，重複並取平均值 [1]', '在至少五個不同的高度重複 [1]'] },
+          { q: '解釋為甚麼 h 對 t² 的線圖應是一條通過原點的直線。', answer: '鋼球由靜止開始，所以 h = ½gt²。h 與 t² 成正比，斜率為 g/2。', points: ['h = ½gt²，所以 h ∝ t²（斜率 g/2）[1]'] },
+          { q: '得到以下結果：<br><table class="dtable"><tr><th>h / m</th><td>0.20</td><td>0.40</td><td>0.60</td><td>0.80</td><td>1.00</td></tr><tr><th>t / s</th><td>0.202</td><td>0.286</td><td>0.350</td><td>0.404</td><td>0.452</td></tr></table>計算每個讀數的 t²，然後在方格上描繪 h 對 t² 的關係，並畫出最佳擬合線。', answer: 't² = 0.041、0.082、0.123、0.163 和 0.204 s²。各點在一條通過原點的直線上。', points: ['t² 數值計算正確 [1]', '各點描繪正確 [1]', '通過原點的最佳擬合直線 [1]'] },
+          { q: '利用線圖的斜率求 g。', answer: '斜率 = 1.00 / 0.204 = 4.90 m s⁻²。g = 2 × 斜率 = 9.8 m s⁻²。', points: ['g = 2 × 斜率 [1M]', '9.8 m s⁻²（9.6 至 10.0）[1A]'] },
+          { q: '指出這實驗的一個誤差來源，以及怎樣減少它。', answer: '例如：電磁鐵關掉時鋼球不會立即釋放（剩磁），所以每個 t 都略長；可在電磁鐵中使用較小的電流，或利用線圖的斜率，使固定的延遲不影響 g。', points: ['合理的誤差來源及相應的改善方法 [1]'] }
+        ]
+      }
+    },
+    {
+      id: 'SM13', topic: 'force', level: 5, sub: 'Circular motion',
+      stem: 'A car of mass 800 kg travels at constant speed round a bend of radius 40 m. The road is banked at 15° to the horizontal, and there is no sideways friction. The diagram shows a cross-section of the road; the centre of the bend is to the left. (g = 9.81 m s⁻²)',
+      figure: svg(380, 205, 'Cross-section of a road banked at 15 degrees with a car on it; the centre of the bend is to the left', bankBase),
+      parts: [
+        {
+          label: '(a)', marks: 2, q: 'On the diagram, draw and label the forces acting on the car.',
+          answer: 'Two forces: the weight W vertically downwards, and the normal reaction R perpendicular to the road surface (tilted towards the centre of the bend).',
+          points: ['Weight W vertically downwards [1]', 'Normal reaction R perpendicular to the road [1]'],
+          draw: { w: 380, h: 205, base: bankBase, tools: ['arrow', 'line'], aria: 'Cross-section of the banked road for drawing the forces', snap: [G, P].map(p => p.map(r)), answer: bankAnswer }
+        },
+        {
+          label: '(b)', marks: 2, q: 'Explain how these forces make the car move in a circle.',
+          answer: 'The vertical component of R balances the weight. The horizontal component of R, towards the centre of the bend, is the resultant force and provides the centripetal force.',
+          points: ['Vertical component of R balances W [1]', 'Horizontal component of R provides the centripetal force [1]']
+        },
+        {
+          label: '(c)', marks: 3, q: 'Find the speed at which the car must travel.',
+          answer: 'R cos 15° = mg and R sin 15° = mv² / r ⇒ tan 15° = v² / (rg).<br>v = √(40 × 9.81 × tan 15°) = √105 = 10.3 m s⁻¹.',
+          points: ['R cos θ = mg [1M]', 'R sin θ = mv² / r [1M]', '10.3 m s⁻¹ [1A]'], num: { v: Math.sqrt(40 * 9.81 * Math.tan(th)), unit: 'm s⁻¹' }
+        },
+        {
+          label: '(d)', marks: 1, q: 'What would happen if the car went faster than this, with no friction?',
+          answer: 'The horizontal component of R would be too small to provide the larger centripetal force, so the car would slide up the bank (outwards).',
+          points: ['Slides up the slope / outwards [1]']
+        }
+      ],
+      zh: {
+        sub: '圓周運動',
+        stem: '一輛質量為 800 kg 的汽車以恆定速率駛過一個半徑為 40 m 的彎道。路面與水平傾斜 15°，沒有側向摩擦力。圖中顯示路面的剖面；彎道的圓心在左方。（g = 9.81 m s⁻²）',
+        parts: [
+          { q: '在圖上畫出並標示作用於汽車的力。', answer: '兩個力：豎直向下的重量 W，以及垂直於路面的法向反作用力 R（向彎道圓心傾斜）。', points: ['重量 W 豎直向下 [1]', '法向反作用力 R 垂直於路面 [1]'] },
+          { q: '解釋這些力怎樣使汽車作圓周運動。', answer: 'R 的豎直分量與重量平衡。R 指向彎道圓心的水平分量就是合力，提供向心力。', points: ['R 的豎直分量與 W 平衡 [1]', 'R 的水平分量提供向心力 [1]'] },
+          { q: '求汽車必須行駛的速率。', answer: 'R cos 15° = mg 及 R sin 15° = mv² / r ⇒ tan 15° = v² / (rg)。<br>v = √(40 × 9.81 × tan 15°) = √105 = 10.3 m s⁻¹。', points: ['R cos θ = mg [1M]', 'R sin θ = mv² / r [1M]', '10.3 m s⁻¹ [1A]'] },
+          { q: '如果沒有摩擦力，而汽車行駛得比這速率快，會發生甚麼事？', answer: 'R 的水平分量不足以提供較大的向心力，所以汽車會沿斜坡向上（向外）滑。', points: ['沿斜坡向上／向外滑 [1]'] }
+        ]
+      }
+    }
+  ]);
+})();

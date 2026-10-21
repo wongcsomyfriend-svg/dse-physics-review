@@ -164,6 +164,7 @@ textarea { width: 100%; min-height: 60px; resize: vertical; }
 
 /* structured questions */
 .sqtag { background: var(--warn-soft); color: var(--warn); }
+.exptag { background: var(--ok-soft); color: var(--ok); }
 .parts { margin-top: 12px; }
 .part { border-top: 1px solid var(--line); padding: 12px 0 4px; }
 .partq { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-bottom: 8px; }
