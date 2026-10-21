@@ -8,6 +8,12 @@ window.I18N = {
   zh: {
     /* nav, header, footer */
     'DSE Physics Review': 'DSE 物理溫習',
+    'QR code': 'QR 碼',
+    'Scan to open this site': '掃描 QR 碼開啟本網站',
+    'Loading…': '載入中…',
+    'No sign-up needed. Each student’s progress is saved on their own device.': '無需註冊或登入。每位同學的進度會儲存在自己的裝置上。',
+    'Close': '關閉',
+    'Could not load the QR code. Please type the address below.': '未能載入 QR 碼，請直接輸入以下網址。',
     'Home': '主頁',
     'Practice': '練習',
     'Mock Paper': '模擬試卷',

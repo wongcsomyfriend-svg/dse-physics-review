@@ -12,6 +12,7 @@ A static revision site for HKDSE Physics students:
 - **Mock paper**: 33 questions across the compulsory part in syllabus order, with a 60-minute timer and a bubble answer sheet. Solutions appear only after you hand in.
 - **Wrong question book (錯題簿)**: every wrong answer is collected automatically. Add notes, redo questions, and clear one by getting it right twice in a row. The mock paper and the wrong book cover MC questions only.
 - **List of data**: physical constants and exam tips.
+- **QR code for class**: the QR 碼 button in the top bar shows a large QR code of the site address, to project in class so students can open the site on their phones by scanning. No sign-up is needed. The QR library (qrcode-generator 1.4.4) is loaded from cdnjs only when the panel is opened.
 - **English and Traditional Chinese (繁體中文)**: the button in the top bar switches the whole site, including every question and worked solution. The choice is remembered, and the site opens in Chinese when the browser language is Chinese.
 
 Progress is saved in the browser's `localStorage`. You can export or import it from the Home page. Progress is shared between the two languages.

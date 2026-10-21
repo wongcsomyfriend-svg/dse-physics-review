@@ -758,6 +758,7 @@
     if (g) { e.preventDefault(); if (g.dataset.type) practiceType = g.dataset.type; go(g.dataset.go); }
   });
   document.addEventListener('keydown', e => {
+    if (document.querySelector('.qr-overlay')) { if (e.key === 'Escape') closeQR(); return; }
     if (location.hash !== '#/quiz' || !session || session.done) return;
     if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
     if (isSQ(session.qs[session.idx]) && !/^Arrow/.test(e.key)) return;
@@ -785,6 +786,44 @@
     b.lang = lang === 'zh' ? 'en' : 'zh-Hant-HK';
     b.title = lang === 'zh' ? 'Switch to English' : '切換至繁體中文';
   }
+  /* ---------- QR code for sharing the site in class ----------
+   * The QR library (qrcode-generator 1.4.4, MIT) is loaded from cdnjs only when the panel is opened.
+   */
+  const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+  let qrLoading = null;
+  const loadQR = () => window.qrcode ? Promise.resolve() : (qrLoading = qrLoading || new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = QR_LIB; s.onload = ok; s.onerror = () => { qrLoading = null; fail(); };
+    document.head.appendChild(s);
+  }));
+  // Black modules on a white background with a 4-module quiet zone, whatever the page theme.
+  function qrSVG(text) {
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make();
+    const n = q.getModuleCount(), m = 4; let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    return `<svg viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges" role="img" aria-label="${esc(T('QR code'))}"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  }
+  function closeQR() { const o = document.querySelector('.qr-overlay'); if (o) o.remove(); document.getElementById('qrBtn').focus(); }
+  function showQR() {
+    if (document.querySelector('.qr-overlay')) return;
+    const url = location.origin + location.pathname;
+    const o = document.createElement('div');
+    o.className = 'qr-overlay';
+    o.innerHTML = `<div class="qr-card" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+      <h2 id="qrTitle">${T('Scan to open this site')}</h2>
+      <div class="qr-code">${T('Loading…')}</div>
+      <p class="qr-url">${esc(url)}</p>
+      <p class="muted qr-note">${T('No sign-up needed. Each student’s progress is saved on their own device.')}</p>
+      <button class="btn primary" id="qrClose" type="button">${T('Close')}</button></div>`;
+    o.onclick = e => { if (e.target === o) closeQR(); };
+    document.body.appendChild(o);
+    const btn = document.getElementById('qrClose');
+    btn.onclick = closeQR; btn.focus();
+    loadQR().then(() => { o.querySelector('.qr-code').innerHTML = qrSVG(url); })
+      .catch(() => { o.querySelector('.qr-code').textContent = T('Could not load the QR code. Please type the address below.'); });
+  }
+  document.getElementById('qrBtn').onclick = showQR;
+
   document.getElementById('langBtn').onclick = () => {
     lang = lang === 'zh' ? 'en' : 'zh';
     try { localStorage.setItem(LANG_KEY, lang); } catch (e) { /* ignore */ }
