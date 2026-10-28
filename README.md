@@ -12,7 +12,7 @@ A static revision site for HKDSE Physics students:
 - **Mock paper**: 33 questions across the compulsory part in syllabus order, with a 60-minute timer and a bubble answer sheet. Solutions appear only after you hand in.
 - **Wrong question book (錯題簿)**: every wrong answer is collected automatically. Add notes, redo questions, and clear one by getting it right twice in a row. The mock paper and the wrong book cover MC questions only.
 - **List of data**: physical constants and exam tips.
-- **QR code for class**: the QR 碼 button in the top bar shows a large QR code of the site address, to project in class so students can open the site on their phones by scanning. No sign-up is needed. The QR library (qrcode-generator 1.4.4) is loaded from cdnjs only when the panel is opened.
+- **QR code for class**: the QR 碼 button in the top bar shows a large QR code of the site address, to project in class so students can open the site on their phones by scanning. No sign-up is needed. The QR code is drawn by a small built-in encoder (`qr.js`), so no outside library is needed.
 - **English and Traditional Chinese (繁體中文)**: the button in the top bar switches the whole site, including every question and worked solution. The choice is remembered, and the site opens in Chinese when the browser language is Chinese.
 
 Progress is saved in the browser's `localStorage`. You can export or import it from the Home page. Progress is shared between the two languages.
@@ -73,3 +73,15 @@ python -m http.server 8000
 ## Hosting
 
 The site is plain HTML, CSS and JS with no build step, so it can be served by GitHub Pages straight from the `main` branch root.
+
+The site loads nothing from other servers: no CDNs, web fonts, analytics or outside libraries. Any static host can serve the folder as it is, and it also works offline if `index.html` is opened from a copy on a computer.
+
+### Access from mainland China
+
+`*.github.io` is often blocked or very slow in mainland China, so students there may not be able to open the GitHub Pages address. To reach them, copy the whole folder (all files except `.git`) to a host that mainland users can reach, for example:
+
+- **A Hong Kong-region static host** from a cloud provider that serves mainland China well, such as Alibaba Cloud or Tencent Cloud object storage with static website hosting in the Hong Kong region, usually with your own domain. Hong Kong regions do not need ICP filing; check the provider's current rules for serving web pages.
+- **A mainland host with ICP filing (ICP 備案)**: the most reliable option inside mainland China, but filing needs a mainland entity and takes time.
+- **Offline copy**: download the repository as a ZIP and open `index.html` in a browser. Everything works without the internet; progress is saved in that browser.
+
+Hosts such as Cloudflare Pages or Netlify are easy to set up from this repository, but access from mainland China is not guaranteed. Whichever host you use, test it from inside mainland China. The QR 碼 button always shows the address the page was opened from.
